@@ -1,5 +1,5 @@
 {
-  "name": "SvelteGraph",
+  "name": "@hillar/yaag",
   "svelte": "src/index.js",
   "module": "dist/index.mjs",
   "main": "dist/index.js",
@@ -19,5 +19,11 @@
   "files": [
     "src",
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "ngraph.forcelayout": "^3.0.1",
+    "ngraph.graph": "^19.1.0",
+    "w-gl": "0.16.0",
+    "yaot": "^1.1.3"
+  }
 }

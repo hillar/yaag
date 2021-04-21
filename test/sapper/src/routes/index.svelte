@@ -12,14 +12,17 @@ $: debug = graph
 
 onMount( () => {
   graph.add('kala','maja')
+	graph.add('maja',[1,2,3,4,5,6,7,8,9,0])
+	graph.add(1,['a','b','c'])
 })
 
 
 
 </script>
 
-<div class="" style="height:15em; width:20em; background-color:red;">
+<div class="" style="height:25em; width:50%; background-color:black;">
     <Graph bind:this="{graph}"/>
+		<button on:click="{graph.relayout()}"> v </button>
 </div>
 
 
