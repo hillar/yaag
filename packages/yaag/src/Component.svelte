@@ -13,12 +13,12 @@
 
   export let nodeColor = 0xddaaaa
   export let lineColor = 0xffffff50
-  export let textColor = 0xffffff50
-  export let rootColor = 0xffffff
+  export let textColor = 0xffffff
+  export let rootColor = 0xffaaaa
   export let highlightColor = -65281
-  export let childColor = 0x90f8fcff
+  export let childColor = 0xddaaaa  //0x90f8fcff
   export let parentColor = 0xddaaaa
-  export let spehereRadius = 3
+  export let spehereRadius = 5
 
   const ITERATIONS_COUNT = 1000
 
@@ -28,13 +28,11 @@
     return _add(parent,childs)
   }
   export function relayout() {
-     console.log('relayout')
 	   return _relayout()
   }
 
 
   export function birdview() {
-    console.log('birdview')
     const rect = layout.getGraphRect()
     const factor = navigator.platform.startsWith('Win') ? 1.2 : .9
     scene.setViewBox({
@@ -87,7 +85,8 @@ let frameToken = 0
 
   function initScene() {
     scene = createScene(canvas);
-    texts = new TextCollection(scene.getGL())
+    // TODO better way to wait for textcolletion is ready
+    texts = new TextCollection(scene.getGL(),()=>{relayout();})
     //scene.setClearColor(0x0f / 255, 0x0f / 0, 0x0f / 0, .5);
     graph = new ngraph()
     layout = forcelayout(graph, physicsSettings)
@@ -97,9 +96,12 @@ let frameToken = 0
     scene.appendChild(lines)
     scene.appendChild(nodes)
     scene.appendChild(texts)
+
   }
 
 function _add(parent, childs) {
+
+
   if (!parent.id) parent = { id: parent , data: {}}
   let needBirdView = false
   if (!graph.hasNode(parent.id)) {
@@ -129,7 +131,9 @@ function _add(parent, childs) {
       color: node.data.color || parentColor,
     }
 
-    node.textId = texts.addText({
+    // text id must be same as node id, as addtext can not return ;/
+
+    texts.addText({
       id: node.id,
 			x: point.x,
 			y: point.y,
@@ -137,11 +141,9 @@ function _add(parent, childs) {
 			color: textColor
 		});
 
-    //node.uiId = nodes.add(node.ui)
     if (node.data.type && icons[node.data.type]){
       node.puiIds = []
       const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
-
       for (const c in icon){
         for (let i = 1; i < icon[c].length; ++i) {
           const puid = pnodes.add({
@@ -178,10 +180,10 @@ function _add(parent, childs) {
           color: node.data.color || childColor,
         }
 
-        node.textId = texts.addText({
+        texts.addText({
           id: node.id,
-    			x: point.x,
-    			y: point.y,
+    			x: point.x - node.data.size ,
+    			y: point.y - node.data.size,
     			text: node.data.label ? ''+node.datal.label : ''+node.id,
     			color: textColor
     		});
@@ -244,8 +246,8 @@ function updatePositions() {
   //scene.removeChild(texts)
   //texts = new TextCollection(scene.getGL())
   graph.forEachNode((node) => {
-    let pos = layout.getNodePosition(node.id)
-    let uiPosition = node.ui.position
+    const pos = layout.getNodePosition(node.id)
+    const uiPosition = node.ui.position
     uiPosition[0] = pos.x
     uiPosition[1] = pos.y
     uiPosition[2] = pos.z || 0
@@ -264,12 +266,14 @@ function updatePositions() {
           })
       }
     }
+
     texts.updateText({
       id: node.id,
-			x: pos.x,
-			y: pos.y,
+			x: pos.x -  node.data.size/2 ,
+			y: pos.y  + node.data.size/2 ,
 			color: textColor
 		});
+
   })
   scene.appendChild(texts)
   pointPositions.init(tmp)
@@ -349,34 +353,14 @@ function renderScene() {
 		display: block;
     height: 100%;
     width: 100%;
-    //border: 1px outset blue;
 	}
 	canvas {
 		display: block;
     height: 100%;
     width: 100%;
-    //border: 1px outset red;
 	}
-
 </style>
 
-<svelte-yaag-viewport
-  bind:this={viewport}
-
-  >
-    <canvas
-      bind:this={canvas}
-      />
+<svelte-yaag-viewport bind:this={viewport}  >
+    <canvas bind:this={canvas} />
 </svelte-yaag-viewport>
-<!--
-
-bind:offsetHeight={viewport_height}
-bind:offsetWidth={viewport_width}
-
-
-style="width: 100%; height: 100%;"
-width={viewport_height * pixelRatio}
-height={viewport_width * pixelRatio}
-style="width: {viewport_width-2}px; height: {viewport_height-2}px;"
-
--->

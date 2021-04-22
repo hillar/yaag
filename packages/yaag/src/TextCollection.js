@@ -1,7 +1,7 @@
-import {defineProgram, InstancedAttribute, GLCollection} from 'w-gl';
+import { defineProgram, ColorAttribute, InstancedAttribute, GLCollection } from 'w-gl';
 
-export default class MSDFTextCollection extends GLCollection {
-  constructor(gl, options = {}) {
+export default class ColoredTextCollection extends GLCollection {
+  constructor(gl, notifyReady, options = {}) {
     gl.getExtension('OES_standard_derivatives');
 
     super(getTextProgram(gl, options));
@@ -10,12 +10,12 @@ export default class MSDFTextCollection extends GLCollection {
     img.crossOrigin = 'Anonymous';
     this.isReady = false;
     this.queue = [];
-    this.fontSize = options.fontSize || 2;
-    this.fontInfo = null;
     this.texts = {}
+    this.fontSize = options.fontSize || 2;
+    this.opacity = options.opacity !== undefined ? options.opacity : 1;
+    this.fontInfo = null;
 
     //let fontPath = 'fonts';
-		//https://raw.githubusercontent.com/anvaka/graph-start/master/public/fonts/Roboto.json
 		let fontPath = 'https://raw.githubusercontent.com/anvaka/graph-start/master/public/fonts'
     fetch(`${fontPath}/Roboto.json`, { mode: 'cors' })
       .then((x) => x.json())
@@ -26,7 +26,6 @@ export default class MSDFTextCollection extends GLCollection {
           let charValue = String.fromCharCode(char.id);
           this.alphabet.set(charValue, char);
         });
-
         this.msdfImage.onload = () => {
           this._sdfTextureChanged = true;
           this.program.setTextureCanvas('msdf', this.msdfImage);
@@ -36,13 +35,12 @@ export default class MSDFTextCollection extends GLCollection {
 
           this.queue.forEach((q) => this.addText(q));
           this.queue = [];
+          notifyReady();
         };
         this.msdfImage.src = `${fontPath}/Roboto0.png`;
       })
-		.catch((error)=>{
-			console.error(error)
-		});
-	}
+      .catch((error)=>{ console.error(error) });
+  }
 
   clear() {
     this.program.setCount(0);
@@ -52,61 +50,25 @@ export default class MSDFTextCollection extends GLCollection {
     if (!this.uniforms) {
       this.uniforms = {
         modelViewProjection: this.modelViewProjection,
-        color: [0.9, 0.9, 0.9, 1.0],
         bias: 0.5,
+        opacity: this.opacity
       };
     }
+    this.uniforms.opacity = this.opacity;
+    this.uniforms.cameraDistance = drawContext.view.position[2];
 
-    this.uniforms.color[0] = 0.2;
-    this.uniforms.color[1] = 0.4;
-    this.uniforms.color[2] = 0.8;
-    this.uniforms.color[3] = 0.8;
-    this.uniforms.bias = 0.35;
-    this.program.draw(this.uniforms);
-
-    this.uniforms.color[0] = 0.9;
-    this.uniforms.color[1] = 0.9;
-    this.uniforms.color[2] = 0.9;
-    this.uniforms.color[3] = 1;
     this.uniforms.bias = 0.5;
     this.program.draw(this.uniforms);
   }
-/*
-  stress(x, y) {
-    let dy = 0;
-    fetch(
-      'https://raw.githubusercontent.com/mmcky/nyu-econ-370/master/notebooks/data/book-war-and-peace.txt'
-    )
-      .then((b) => b.text())
-      .then((text) => {
-        let lineCount = 0;
-        text.split('\n').forEach((line) => {
-          this.addText({ text: line, x, y: y + dy });
-          dy -= this.fontSize;
-          lineCount += 1;
-          if (lineCount > 1000) {
-            lineCount = 0;
-            x += 80;
-            dy = 0;
-          }
-        });
-      });
-  }
-*/
+
   addText(textInfo) {
-
     if (!this.isReady) {
-
       this.queue.push(textInfo);
       return;
     }
-
     let { id, text, x = 0, y = 0, z = 0 } = textInfo;
-    if (id === undefined) {
-      throw new Error('ID is not defined in ' + textInfo)
-    }
     if (text === undefined) {
-      throw new Error('Text is not defined in ' + textInfo)
+      throw new Error('Text is not defined in ' + textInfo);
     }
     let dx = 0;
     let fontSize = textInfo.fontSize || this.fontSize;
@@ -134,7 +96,7 @@ export default class MSDFTextCollection extends GLCollection {
     if (textInfo.cy !== undefined) {
       y += fontSize * textInfo.cy;
     }
-    const ret = []
+    const chars = []
     for (let char of text) {
       let sdfPos = this.alphabet.get(char);
       if (!sdfPos) {
@@ -142,11 +104,13 @@ export default class MSDFTextCollection extends GLCollection {
         continue;
       }
 
-      const tmp = this.add({
+      const cid = this.add({
         position: [x + dx, y - sdfPos.yoffset * scale, z],
+        color: textInfo.color,
         charSize: [
           (fontSize * sdfPos.width) / 42,
           (-fontSize * sdfPos.height) / 42,
+          fontSize
         ],
         texturePosition: [
           sdfPos.x / this.sdfTextureWidth,
@@ -155,14 +119,12 @@ export default class MSDFTextCollection extends GLCollection {
           -sdfPos.height / this.sdfTextureHeight,
         ],
       });
-      ret.push(tmp)
-
+      chars.push(cid)
       dx += sdfPos.xadvance * scale;
     }
-    if (this.scene) this.scene.renderFrame();
-    this.texts[id] = ret
+    this.texts[id] = chars
+    //if (this.scene) this.scene.renderFrame();
   }
-
   updateText(textInfo){
     let { id, x = 0, y = 0, z = 0 } = textInfo;
     if (id === undefined) {
@@ -192,9 +154,6 @@ export default class MSDFTextCollection extends GLCollection {
   }
 }
 
-
-
-
 function getTextProgram(gl, options) {
   return defineProgram({
     capacity: options.capacity || 1,
@@ -203,25 +162,27 @@ function getTextProgram(gl, options) {
     gl,
     vertex: `
   uniform mat4 modelViewProjection;
-  uniform vec4 color;
+  uniform float cameraDistance;
+
+  attribute vec4 color;
 
   // Position of the text character:
   attribute vec3 position;
   // Instanced quad coordinate:
   attribute vec2 point;
-  attribute vec2 charSize;
+  attribute vec3 charSize;
   // [x, y, w, h] - of the character in the msdf texture;
   attribute vec4 texturePosition;
 
   varying vec2 vPoint;
+  varying vec4 vColor;
 
   void main() {
     gl_Position = modelViewProjection * vec4(
-      position + vec3(
-        vec2(point.x, point.y) * charSize,
-        position.z),
-      1.);
+      position + vec3(vec2(point.x, point.y) * charSize.xy, position.z), 1.);
     vPoint = texturePosition.xy + point * texturePosition.zw;
+    vColor = color.abgr;
+    vColor[3] = smoothstep(0.2, 0.8, 100.0 / (50. * charSize.z) );
   }`,
 
     fragment: `
@@ -230,9 +191,10 @@ function getTextProgram(gl, options) {
 #endif
   precision highp float;
   varying vec2 vPoint;
+  varying vec4 vColor;
 
-  uniform vec4 color;
   uniform float bias;
+  uniform float opacity;
   uniform sampler2D msdf;
 
   float median(float r, float g, float b) {
@@ -243,8 +205,11 @@ function getTextProgram(gl, options) {
     vec3 sample = texture2D(msdf, vPoint).rgb;
     float sigDist = median(sample.r, sample.g, sample.b) - bias;
     float alpha = clamp(sigDist / fwidth(sigDist) + bias, 0.0, 1.0);
-    gl_FragColor = vec4(color.rgb, color.a * alpha);
+    gl_FragColor = vec4(vColor.rgb, vColor.a * alpha * opacity);
   }`,
+    attributes: {
+      color: new ColorAttribute(),
+    },
     instanced: {
       point: new InstancedAttribute([0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1]),
     },
