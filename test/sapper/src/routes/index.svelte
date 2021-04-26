@@ -10,11 +10,21 @@ let debug
 
 $: debug = graph
 
-onMount( () => {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-  graph.add('kala','maja asd as as ca dv aõppöä !?#€%€%&/ ')
-	graph.add('maja',[1,2,3,4,5,6,7,8,9,0])
-	graph.add(1,['a','b','c'])
+onMount( async () => {
+  /*
+  await graph.add('kala','maja')
+	await graph.add('maja',[1,2,3,4,5,6,7,8,9,0])
+	await graph.add(1,['a','b','c'])
+  */
+  for (let i = 0; i < 1409; ++i) {
+    await sleep(Math.random()*10)
+		graph.add(Math.round(Math.random()*1000),[Math.round(Math.random()*9100)])
+
+  }
 
 })
 

@@ -9,6 +9,8 @@
   import LineCollection from './LineCollection.js'
   import TextCollection from './TextCollection.js'
 
+  import Loading from './Loading.svelte'
+
   import { onMount } from 'svelte'
 
   export let nodeColor = 0xddaaaa
@@ -20,7 +22,7 @@
   export let parentColor = 0xddaaaa
   export let spehereRadius = 5
 
-  const ITERATIONS_COUNT = 1000
+  const ITERATIONS_COUNT = 10000
 
   let linkColor = lineColor
 
@@ -101,7 +103,7 @@ let frameToken = 0
 
 function _add(parent, childs) {
 
-
+  //return new Promise ( (resolve) => {
   if (!parent.id) parent = { id: parent , data: {}}
   let needBirdView = false
   if (!graph.hasNode(parent.id)) {
@@ -112,7 +114,7 @@ function _add(parent, childs) {
 			nodeRoot.data.size = nodeRoot.data.size ?  nodeRoot.data.size : spehereRadius * 4
 			nodeRoot.data.color = nodeRoot.data.color ?  nodeRoot.data.color : rootColor
       //nodeRoot.data.type = nodeRoot.data.type ? nodeRoot.data.type : 'root'
-      //layout.pinNode(nodeRoot, true)
+      layout.pinNode(nodeRoot, true)
       layout.setNodePosition(parent.id, 0, 0, 0)
       needBirdView = true
     }
@@ -220,12 +222,15 @@ function _add(parent, childs) {
         link.ui = line
         link.uiId = lines.add(link.ui)
       }
-    //}, 0)
+    relayout()
   }
-  relayout()
+  // relayout()
   if (needBirdView) {
     birdview()
   }
+  //resolve()
+  //})
+
 }
 
 function _relayout() {
@@ -290,7 +295,12 @@ function updatePositions() {
     to[2] = toPos.z || 0
     lines.update(link.uiId, link.ui)
   })
+
 }
+
+let waittimeouter
+let waitcounter = 0
+let startwait
 
 function renderFrame() {
   if (!frameToken) frameToken = requestAnimationFrame(frame)
@@ -301,21 +311,45 @@ function frame() {
   frameToken = 0
 }
 
+let maxTimePerChunk
 function renderScene() {
-	let stable =  layout.step()
-  for (let i = 0; i < ITERATIONS_COUNT; ++i) {
-		if (stable) break
-   	stable =  layout.step()
+  maxTimePerChunk = maxTimePerChunk || 100;
+  let startTime
+  let iters = 0
+  let stable
+  if (!startwait) {
+    startwait = window.performance.now()
   }
-  updatePositions()
-  const rect = layout.getGraphRect()
-  scene.setViewBox({
-    left: rect.min_x,
-    top: rect.min_y,
-    right: rect.max_x,
-    bottom: rect.max_y,
-  })
-  scene.renderFrame()
+  function doIters(){
+    startTime = window.performance.now();
+    while (iters < ITERATIONS_COUNT) {
+      iters++
+      stable =  layout.step()
+  		if (stable) {
+        clearTimeout(waittimeouter)
+        waittimeouter = setTimeout(()=>{
+          const took = window.performance.now() - startwait
+          startwait = undefined
+        },maxTimePerChunk*2)
+        break
+      }
+      const elapsed = window.performance.now() - startTime;
+      if (elapsed > maxTimePerChunk && iters < ITERATIONS_COUNT) {
+        const rect = layout.getGraphRect()
+        updatePositions()
+        scene.setViewBox({
+          left: rect.min_x,
+          top: rect.min_y,
+          right: rect.max_x,
+          bottom: rect.max_y,
+        })
+        scene.renderFrame()
+        setTimeout( () => { doIters() },1)
+        break
+      }
+    }
+  }
+  doIters()
 }
 
 
@@ -359,8 +393,26 @@ function renderScene() {
     height: 100%;
     width: 100%;
 	}
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    width: 90%;
+    text-align: center;
+    color: yellow;
+    background-color: black;
+    box-shadow: 0px 0px 20px 10px black;
+  }
+
 </style>
 
 <svelte-yaag-viewport bind:this={viewport}  >
     <canvas bind:this={canvas} />
+    {#if (startwait)}
+    <div class="loading">
+
+        <span>Please wait ..</span>
+
+    </div>
+    {/if}
 </svelte-yaag-viewport>
