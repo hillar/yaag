@@ -34,7 +34,7 @@ onMount( async () => {
 <div class="" style="height:25em; width:50%; background-color:black;">
     <Graph
     bind:this="{graph}"
-    on:mouseOnNode="{({detail: node})=>{console.log(node)}}"
+    on:mouseOnNode="{({detail: node})=>{/*console.log('mouseOnNode',node)*/}}"
     />
 		<button on:click="{graph.relayout()}"> v </button>
 </div>

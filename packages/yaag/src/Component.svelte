@@ -367,6 +367,23 @@ function preciseCheck(x, y, z, cx, cy, cz, r) {
 }
 
 
+function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
+  const maybehit = pointPositions.intersectSphere(Math.round(x), Math.round(y), Math.round(z), intersectRadius)
+  for (let i in maybehit) {
+    const hit = (maybehit[i] + 3) / 3
+    const hittedNode = idxPositions[hit - 1]
+    const node = graph.getNode(hittedNode)
+    const r = node.ui.size / 2
+    const xx = node.ui.position[0]
+    const yy = node.ui.position[1]
+    const zz = node.ui.position[2]
+    const testhit = preciseCheck(xx, yy, zz, x, y, z, r)
+    if (testhit) {
+      return node
+    }
+  }
+}
+
   onMount( () => {
     //TODO get colors from style
     let cs = getComputedStyle(viewport)
@@ -392,55 +409,60 @@ function preciseCheck(x, y, z, cx, cy, cz, r) {
       }
     }
     */
-    let waitformousetostop
-scene.on('mousemove',(e)=>{
-  clearTimeout(waitformousetostop);
-  waitformousetostop = setTimeout(() => {
-
-          const maybehit = pointPositions.intersectSphere(Math.round(e.x), Math.round(e.y), 0, intersectSphereRadius)
-          for (let i in maybehit) {
-            const hit = (maybehit[i] + 3) / 3
-            const hittedNode = idxPositions[hit - 1]
-            const node = graph.getNode(hittedNode)
-            const r = node.ui.size / 2
-            const x = node.ui.position[0]
-            const y = node.ui.position[1]
-            const z = node.ui.position[2]
-            const testhit = preciseCheck(x, y, z, e.x, e.y, e.z, r)
-            if (testhit) {
-              dispatch('mouseOnNode', node)
-
-              X = e.originalEvent.layerX
-              Y = e.originalEvent.layerY
-              /*
-              mouseOnNode = true
-              // dehigllight
-              if (currentNode){
-                currentNode.ui.color = oldcolor
-                nodes.update(currentNode.uiId, currentNode.ui)
-                for (const link of currentNode.links){
-                  link.ui.color = linkColor
-                  lines.update(link.uiId,link.ui)
+      let waitformousetostop
+      let mouseOnNode
+      let clickedNode
+      scene.on('mousemove',(e)=>{
+        clearTimeout(waitformousetostop)
+        waitformousetostop = setTimeout(() => {
+                const node = xyisnode(e.x,e.y,e.z)
+                if (node) {
+                  if (mouseOnNode) {
+                    mouseOnNode.node.ui.color = mouseOnNode.oldcolor
+                    nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
+                    for (const link of mouseOnNode.node.links){
+                      link.ui.color = linkColor
+                      lines.update(link.uiId,link.ui)
+                    }
+                  }
+                  mouseOnNode =  {oldcolor:node.ui.color, node}
+                  dispatch('mouseOnNode', node)
+                  node.ui.color = highlightColor
+                  nodes.update(node.uiId, node.ui)
+                  for (const link of node.links){
+                    link.ui.color = highlightColor
+                    lines.update(link.uiId,link.ui)
+                  }
                   scene.renderFrame()
                 }
-              }
-              oldcolor = node.ui.color
-              node.ui.color = highlightColor
-              nodes.update(node.uiId, node.ui)
-              for (const link of node.links){
-                link.ui.color = highlightColor
-                lines.update(link.uiId,link.ui)
-                //scene.renderFrame()
-              }
-              scene.renderFrame()
-              currentNode = node
-              */
-              break
+        },150)
+      })
+      scene.on('click',(e)=>{
+        const node = xyisnode(e.x,e.y,e.z)
+        if (node) {
+          console.log('click', node)
+          if (mouseOnNode) {
+            mouseOnNode.node.ui.color = mouseOnNode.oldcolor
+            nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
+            for (const link of mouseOnNode.node.links){
+              link.ui.color = linkColor
+              lines.update(link.uiId,link.ui)
             }
+            mouseOnNode = undefined
           }
-  },250)
-
-})
+          if (clickedNode) {
+            clickedNode.node.ui.color = clickedNode.oldcolor
+            nodes.update(clickedNode.node.uiId, clickedNode.node.ui)
+          }
+          if (!clickedNode || clickedNode.node.id !== node.id){
+            clickedNode =  {oldcolor:node.ui.color, node}
+            dispatch('mouseOnNode', node)
+            node.ui.color = highlightColor
+            nodes.update(node.uiId, node.ui)
+            }
+          scene.renderFrame()
+        }
+      })
 
   })
 
@@ -471,7 +493,21 @@ scene.on('mousemove',(e)=>{
 </style>
 
 <svelte-yaag-viewport bind:this={viewport}  >
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas}
+      on:contextmenu="{
+        (e)=>{
+          // TODO move it to scene if w-gl ready
+          e.preventDefault();
+          const {x,y,z} = scene.getSceneCoordinate(e.clientX, e.clientY)
+          const node = xyisnode(x,y,z)
+          if (node) {
+            console.log('contextmenu',node)
+          } else {
+            console.log('contextmenu','MAIN')
+          }
+        }
+      }"
+    />
     {#if (startwait)}
     <div class="loading">
         <Loading />
