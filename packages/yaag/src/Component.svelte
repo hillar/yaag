@@ -312,6 +312,7 @@ function frame() {
 }
 
 let maxTimePerChunk
+
 function renderScene() {
   maxTimePerChunk = maxTimePerChunk || 100;
   let startTime
@@ -395,13 +396,9 @@ function renderScene() {
 	}
   .loading {
     position: absolute;
-    top: 50%;
+    top: 45%;
     left: 5%;
     width: 90%;
-    text-align: center;
-    color: yellow;
-    background-color: black;
-    box-shadow: 0px 0px 20px 10px black;
   }
 
 </style>
@@ -410,9 +407,7 @@ function renderScene() {
     <canvas bind:this={canvas} />
     {#if (startwait)}
     <div class="loading">
-
-        <span>Please wait ..</span>
-
+        <Loading />
     </div>
     {/if}
 </svelte-yaag-viewport>

@@ -23,7 +23,6 @@ onMount( async () => {
   for (let i = 0; i < 1409; ++i) {
     await sleep(Math.random()*10)
 		graph.add(Math.round(Math.random()*1000),[Math.round(Math.random()*9100)])
-
   }
 
 })

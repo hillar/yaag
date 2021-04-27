@@ -2,8 +2,6 @@
 
 import { fade } from 'svelte/transition';
 
-export let message = undefined
-
 </script>
 
 <style>
@@ -19,7 +17,7 @@ export let message = undefined
     width: 13px;
     height: 13px;
     border-radius: 50%;
-    background: rgb(0 0 0 / 30%);
+    background: yellow;/*rgb(0 0 0 / 30%);*/
     animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
 .lds-ellipsis div:nth-child(1) {
@@ -76,11 +74,6 @@ export let message = undefined
 </style>
 
 <div class = "loading" in:fade out:fade>
-    {#if (message)}
-      <div class = "content" >
-          {message}
-      </div>
-    {/if}
     <div class = "content">
         <div class="lds-ellipsis">
           <div></div><div></div><div></div><div></div></div>
