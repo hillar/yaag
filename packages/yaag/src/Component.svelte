@@ -34,7 +34,7 @@
     return _add(parent,childs)
   }
   export function relayout() {
-	   return _relayout()
+	   renderFrame()
   }
 
 
@@ -92,7 +92,7 @@ let frameToken = 0
   function initScene() {
     scene = createScene(canvas);
     // TODO better way to wait for textcolletion is ready
-    texts = new TextCollection(scene.getGL(),()=>{relayout();})
+    texts = new TextCollection(scene.getGL(),()=>{updatePositions(); scene.renderFrame()})
     //scene.setClearColor(0x0f / 255, 0x0f / 0, 0x0f / 0, .5);
     graph = new ngraph()
     layout = forcelayout(graph, physicsSettings)
@@ -238,12 +238,7 @@ function _add(parent, childs) {
 }
 
 function _relayout() {
-  /*
-	let stable =  layout.step()
-  for (let i = 0; i < count; ++i) {
-    stable =  layout.step()
-		if (stable) break
-  }*/
+
   renderFrame()
 }
 
@@ -329,7 +324,7 @@ function renderScene() {
     startTime = window.performance.now();
     while (iters < ITERATIONS_COUNT) {
       iters++
-      stable =  layout.step()
+      stable = layout.step()
   		if (stable) {
         clearTimeout(waittimeouter)
         waittimeouter = setTimeout(()=>{
@@ -352,6 +347,16 @@ function renderScene() {
         setTimeout( () => { doIters() },1)
         break
       }
+      const rect = layout.getGraphRect()
+      updatePositions()
+      scene.setViewBox({
+        left: rect.min_x,
+        top: rect.min_y,
+        right: rect.max_x,
+        bottom: rect.max_y,
+      })
+      scene.renderFrame()
+
     }
   }
   doIters()
@@ -385,6 +390,97 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
   }
 }
 
+
+
+function findPath(from,to){
+
+  const pathFinder = aStar(graph)
+
+  function _findPath(from, to){
+    console.log('_',from,to)
+    const p = pathFinder.find(to,from)
+    console.log(p)
+    /*
+    if (p.length > 2 ) {
+      for ( let i = 0; i < (p.length -1); i++ ){
+        if (p[i].links.length > 2) {
+          const prev = i > 0 ? p[i-1].id : from
+          const next = i < p[i].links.length ? p[i+1].id :  to
+          const current = p[i].id
+          console.log(current)
+          //console.log(prev,current,next)
+          for ( const link of p[i].links) {
+            //console.log(link)
+            if (!(link.fromId === parent || link.toId === parent)) {
+              if (!(link.fromId === next || link.toId === next)) {
+                //console.log('___',link)
+                const split = link.fromId === current ? link.toId : link.fromId
+                //console.log('split',split)
+                const ppp = pathFinder.find(from, split)
+                //drawPath(ppp,textColor)
+                //console.log(ppp)
+                if (ppp.length > 1 && (ppp[1].id !== current || ppp[1].id !== prev || ppp[1].id !== next)) {
+                  //_findPath(from, split)
+                }
+
+              }
+              //console.log(i,link)
+              //const ppp = _findPath(link,to)
+            }
+          }
+          //const pp = pathFinder.find(p[0].id,to)
+          break
+        } else {
+          console.log(p[i].id)
+        }
+      }
+    }
+    */
+    const sg = new ngraph()
+    for (const n of p) sg.addNode(n.id)
+    for (let i = 0; i < (p.length -1); i++ ) sg.addLink(p[i].id,p[i+1].id)
+    return sg
+  }
+
+  const connetion = _findPath(from,to)
+  const linksCount = connetion.getLinksCount()
+  console.log(linksCount,connetion)
+  return linksCount ? connetion : undefined
+}
+
+function drawPath(connetion, color){
+  for (let i = 0; i < (connetion.length-1); ++i) {
+    for (const link of connetion[i].links) {
+      if (link.fromId === connetion[i+1].id || link.toId === connetion[i+1].id) {
+        link.ui.color = color
+        lines.update(link.uiId,link.ui)
+      }
+    }
+  }
+}
+function drawSubGraphLinks(subg, lcolor, ncolor){
+  if (!ncolor) ncolor = lcolor
+  subg.forEachLink((l) => {
+    console.log(l)
+    let link
+    link = graph.getLink(l.fromId,l.toId)
+    if (!link) link = graph.getLink(l.toId,l.fromId)
+    if (lcolor) link.ui.colorOrig = link.ui.color
+    else lcolor = link.ui.colorOrig
+    link.ui.color = lcolor
+    lines.update(link.uiId,link.ui)
+  })
+  /*
+  subg.forEachNode((n) => {
+    const node = graph.getNode(n.id)
+    if (ncolor) node.ui.colorOrig = node.ui.color
+    else ncolor = node.ui.colorOrig
+    node.ui.color = ncolor
+    nodes.update(node.uiId,node.ui)
+  })
+  */
+}
+
   onMount( () => {
     //TODO get colors from style
     let cs = getComputedStyle(viewport)
@@ -416,59 +512,45 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
       scene.on('mousemove',(e)=>{
         clearTimeout(waitformousetostop)
         waitformousetostop = setTimeout(() => {
-                const node = xyisnode(e.x,e.y,e.z)
-                if (node) {
-                  if (mouseOnNode) {
-                    mouseOnNode.node.ui.color = mouseOnNode.oldcolor
-                    nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
-                    for (const link of mouseOnNode.node.links){
-                      link.ui.color = linkColor
-                      lines.update(link.uiId,link.ui)
-                    }
-                  }
-                  mouseOnNode =  {oldcolor:node.ui.color, node}
-                  dispatch('mouseOnNode', node)
-                  node.ui.color = highlightColor
-                  nodes.update(node.uiId, node.ui)
-                  let connetion
-                  if (clickedNode) {
-                    if (clickedNode.connetion && clickedNode.connetion.length) {
-                      for (let i = 0; i < (clickedNode.connetion.length-1); ++i) {
-                        for (const link of clickedNode.connetion[i].links) {
-                          if (link.fromId === clickedNode.connetion[i+1].id || link.toId === clickedNode.connetion[i+1].id) {
-                            link.ui.color = linkColor
-                            lines.update(link.uiId,link.ui)
-                          }
-                        }
-                      }
-                    }
-                    const pathFinder = aStar(graph)
-                    connetion = pathFinder.find(clickedNode.node.id,node.id)
-                    clickedNode.connetion = connetion
-                  }
-                  if (connetion && connetion.length) {
-                    for (let i = 0; i < (connetion.length-1); ++i) {
-                      for (const link of connetion[i].links) {
-                        if (link.fromId === connetion[i+1].id || link.toId === connetion[i+1].id) {
-                          link.ui.color = highlightColor
-                          lines.update(link.uiId,link.ui)
-                        }
-                      }
-                    }
-                  } else {
-                    for (const link of node.links){
-                      link.ui.color = highlightColor
-                      lines.update(link.uiId,link.ui)
-                    }
-                  }
-                  scene.renderFrame()
+            const node = xyisnode(e.x,e.y,e.z)
+            if (node) {
+              if (mouseOnNode) {
+                mouseOnNode.node.ui.color = mouseOnNode.oldcolor
+                nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
+                for (const link of mouseOnNode.node.links){
+                  link.ui.color = linkColor
+                  lines.update(link.uiId,link.ui)
                 }
+              }
+              mouseOnNode =  { oldcolor: node.ui.color, node}
+              dispatch('mouseOnNode', node)
+              node.ui.color = highlightColor
+              nodes.update(node.uiId, node.ui)
+              let connetion
+              if (clickedNode) {
+                if (clickedNode.connetion ) {
+                  //drawPath(clickedNode.connetion,linkColor)
+                  drawSubGraphLinks(clickedNode.connetion)
+                }
+                connetion = findPath(clickedNode.node.id,node.id)
+                clickedNode.connetion = connetion
+              }
+              if (connetion) {
+                drawSubGraphLinks(connetion, highlightColor)
+                dispatch('mouseOnPath', connetion)
+              } else {
+                for (const link of node.links){
+                  link.ui.color = highlightColor
+                  lines.update(link.uiId,link.ui)
+                }
+              }
+              scene.renderFrame()
+            }
         },150)
       })
       scene.on('click',(e)=>{
         const node = xyisnode(e.x,e.y,e.z)
         if (node) {
-          console.log('click', node)
           if (mouseOnNode) {
             mouseOnNode.node.ui.color = mouseOnNode.oldcolor
             nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
@@ -479,22 +561,20 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
             mouseOnNode = undefined
           }
           if (clickedNode) {
+            if (clickedNode.connetion && clickedNode.connetion.length) {
+              console.log('linked path',clickedNode.connetion)
+              dispatch('clickOnPath', clickedNode.connetion)
+            }
             clickedNode.node.ui.color = clickedNode.oldcolor
             nodes.update(clickedNode.node.uiId, clickedNode.node.ui)
-            if (clickedNode.connetion && clickedNode.connetion.length) {
-              for (let i = 0; i < (clickedNode.connetion.length-1); ++i) {
-                for (const link of clickedNode.connetion[i].links) {
-                  if (link.fromId === clickedNode.connetion[i+1].id || link.toId === clickedNode.connetion[i+1].id) {
-                    link.ui.color = linkColor
-                    lines.update(link.uiId,link.ui)
-                  }
-                }
-              }
+            if (clickedNode.connetion ) {
+              //drawPath(clickedNode.connetion,linkColor)
+              drawSubGraphLinks(clickedNode.connetion)
             }
           }
           if (!clickedNode || clickedNode.node.id !== node.id){
             clickedNode =  {oldcolor:node.ui.color, node}
-            dispatch('mouseOnNode', node)
+            dispatch('clickOnNode', node)
             node.ui.color = highlightColor
             nodes.update(node.uiId, node.ui)
             }
