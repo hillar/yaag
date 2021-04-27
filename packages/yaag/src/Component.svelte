@@ -3,6 +3,7 @@
   import ngraph from 'ngraph.graph'
   import forcelayout from 'ngraph.forcelayout'
   import createtree from 'yaot'
+  import { aStar } from 'ngraph.path'
 
   import {style2rgba, toColor, toRgba} from './colors.mjs'
   import PointCollection from './PointCollection.js'
@@ -429,9 +430,36 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
                   dispatch('mouseOnNode', node)
                   node.ui.color = highlightColor
                   nodes.update(node.uiId, node.ui)
-                  for (const link of node.links){
-                    link.ui.color = highlightColor
-                    lines.update(link.uiId,link.ui)
+                  let connetion
+                  if (clickedNode) {
+                    if (clickedNode.connetion && clickedNode.connetion.length) {
+                      for (let i = 0; i < (clickedNode.connetion.length-1); ++i) {
+                        for (const link of clickedNode.connetion[i].links) {
+                          if (link.fromId === clickedNode.connetion[i+1].id || link.toId === clickedNode.connetion[i+1].id) {
+                            link.ui.color = linkColor
+                            lines.update(link.uiId,link.ui)
+                          }
+                        }
+                      }
+                    }
+                    const pathFinder = aStar(graph)
+                    connetion = pathFinder.find(clickedNode.node.id,node.id)
+                    clickedNode.connetion = connetion
+                  }
+                  if (connetion && connetion.length) {
+                    for (let i = 0; i < (connetion.length-1); ++i) {
+                      for (const link of connetion[i].links) {
+                        if (link.fromId === connetion[i+1].id || link.toId === connetion[i+1].id) {
+                          link.ui.color = highlightColor
+                          lines.update(link.uiId,link.ui)
+                        }
+                      }
+                    }
+                  } else {
+                    for (const link of node.links){
+                      link.ui.color = highlightColor
+                      lines.update(link.uiId,link.ui)
+                    }
                   }
                   scene.renderFrame()
                 }
@@ -453,6 +481,16 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
           if (clickedNode) {
             clickedNode.node.ui.color = clickedNode.oldcolor
             nodes.update(clickedNode.node.uiId, clickedNode.node.ui)
+            if (clickedNode.connetion && clickedNode.connetion.length) {
+              for (let i = 0; i < (clickedNode.connetion.length-1); ++i) {
+                for (const link of clickedNode.connetion[i].links) {
+                  if (link.fromId === clickedNode.connetion[i+1].id || link.toId === clickedNode.connetion[i+1].id) {
+                    link.ui.color = linkColor
+                    lines.update(link.uiId,link.ui)
+                  }
+                }
+              }
+            }
           }
           if (!clickedNode || clickedNode.node.id !== node.id){
             clickedNode =  {oldcolor:node.ui.color, node}
