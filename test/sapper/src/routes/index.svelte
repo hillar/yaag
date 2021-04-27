@@ -21,8 +21,8 @@ onMount( async () => {
 	await graph.add(1,['a','b','c'])
   */
   for (let i = 0; i < 1409; ++i) {
-    await sleep(Math.random()*10)
-		graph.add(Math.round(Math.random()*1000),[Math.round(Math.random()*9100)])
+    //await sleep(Math.random()*10)
+		graph.add(Math.round(Math.random()*1000),[Math.round(Math.random()*1100)])
   }
 
 })
@@ -32,7 +32,10 @@ onMount( async () => {
 </script>
 
 <div class="" style="height:25em; width:50%; background-color:black;">
-    <Graph bind:this="{graph}"/>
+    <Graph
+    bind:this="{graph}"
+    on:mouseOnNode="{({detail: node})=>{console.log(node)}}"
+    />
 		<button on:click="{graph.relayout()}"> v </button>
 </div>
 

@@ -11,7 +11,7 @@
 
   import Loading from './Loading.svelte'
 
-  import { onMount } from 'svelte'
+  import { onMount, createEventDispatcher } from 'svelte'
 
   export let nodeColor = 0xddaaaa
   export let lineColor = 0xffffff50
@@ -23,6 +23,9 @@
   export let spehereRadius = 5
 
   const ITERATIONS_COUNT = 10000
+  const intersectSphereRadius = 20 // TODO set depending on graph nodes size
+  let X, Y
+  const dispatch = createEventDispatcher()
 
   let linkColor = lineColor
 
@@ -355,11 +358,26 @@ function renderScene() {
 
 
 
+function preciseCheck(x, y, z, cx, cy, cz, r) {
+  function sqr(x) {
+    return x * x
+  }
+  const r2 = r * r
+  return sqr(x - cx) + sqr(y - cy) + sqr(z - cz) < r2
+}
+
 
   onMount( () => {
+    //TODO get colors from style
+    let cs = getComputedStyle(viewport)
+    let color = cs.getPropertyValue('color')
     initScene()
     /*
-    let cs = getComputedStyle(viewport.parentElement)
+    background-color
+    color
+    fill
+    */
+    /*
     let c = cs.getPropertyValue('color')
     for (const p of cs) {
       const sv = cs.getPropertyValue(p)
@@ -374,6 +392,55 @@ function renderScene() {
       }
     }
     */
+    let waitformousetostop
+scene.on('mousemove',(e)=>{
+  clearTimeout(waitformousetostop);
+  waitformousetostop = setTimeout(() => {
+
+          const maybehit = pointPositions.intersectSphere(Math.round(e.x), Math.round(e.y), 0, intersectSphereRadius)
+          for (let i in maybehit) {
+            const hit = (maybehit[i] + 3) / 3
+            const hittedNode = idxPositions[hit - 1]
+            const node = graph.getNode(hittedNode)
+            const r = node.ui.size / 2
+            const x = node.ui.position[0]
+            const y = node.ui.position[1]
+            const z = node.ui.position[2]
+            const testhit = preciseCheck(x, y, z, e.x, e.y, e.z, r)
+            if (testhit) {
+              dispatch('mouseOnNode', node)
+
+              X = e.originalEvent.layerX
+              Y = e.originalEvent.layerY
+              /*
+              mouseOnNode = true
+              // dehigllight
+              if (currentNode){
+                currentNode.ui.color = oldcolor
+                nodes.update(currentNode.uiId, currentNode.ui)
+                for (const link of currentNode.links){
+                  link.ui.color = linkColor
+                  lines.update(link.uiId,link.ui)
+                  scene.renderFrame()
+                }
+              }
+              oldcolor = node.ui.color
+              node.ui.color = highlightColor
+              nodes.update(node.uiId, node.ui)
+              for (const link of node.links){
+                link.ui.color = highlightColor
+                lines.update(link.uiId,link.ui)
+                //scene.renderFrame()
+              }
+              scene.renderFrame()
+              currentNode = node
+              */
+              break
+            }
+          }
+  },250)
+
+})
 
   })
 
