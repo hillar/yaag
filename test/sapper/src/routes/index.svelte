@@ -1,6 +1,6 @@
 <script>
 import { onMount } from 'svelte'
-import Graph from '../../../../packages/yaag/src/Component.svelte'
+import Graph from '../../../../packages/yaag/src/index.mjs'
 import ngraph from 'ngraph.graph'
 import { aStar } from 'ngraph.path'
 
@@ -342,9 +342,10 @@ const findPathD = (graph,from,to) => {
 <div class="" style="height:90vh; width:90vw; background-color:black;">
     <Graph
     bind:this="{graph}"
-    findPath="{findPathD}"
+
     on:mouseOnNode="{({detail: node})=>{/*console.log('mouseOnNode',node)*/}}"
     />
 		<button on:click="{graph.relayout()}"> o </button>
     <button on:click="{graph.birdview()}"> v </button>
 </div>
+    <!--findPath="{findPathD}" -->

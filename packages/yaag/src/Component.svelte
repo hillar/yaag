@@ -397,7 +397,7 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
 
 
 
-function findPathAStar(from,to){
+function findPathAStar(graph,from,to){
   let pathFinder = aStar(graph)
   const result = new ngraph()
   const path = pathFinder.find(to,from)
