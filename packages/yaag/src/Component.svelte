@@ -22,11 +22,16 @@
   export let childColor = 0xddaaaa  //0x90f8fcff
   export let parentColor = 0xddaaaa
   export let spehereRadius = 5
+  export let findPath = findPathAStar
 
   const ITERATIONS_COUNT = 10000
   const intersectSphereRadius = 20 // TODO set depending on graph nodes size
   let X, Y
-  const dispatch = createEventDispatcher()
+  const _dispatch = createEventDispatcher()
+  const dispatch = (n,d) => {
+    console.log(n,d)
+    _dispatch(n,d)
+  }
 
   let linkColor = lineColor
 
@@ -347,17 +352,16 @@ function renderScene() {
         setTimeout( () => { doIters() },1)
         break
       }
-      const rect = layout.getGraphRect()
-      updatePositions()
-      scene.setViewBox({
-        left: rect.min_x,
-        top: rect.min_y,
-        right: rect.max_x,
-        bottom: rect.max_y,
-      })
-      scene.renderFrame()
-
     }
+    const rect = layout.getGraphRect()
+    updatePositions()
+    scene.setViewBox({
+      left: rect.min_x,
+      top: rect.min_y,
+      right: rect.max_x,
+      bottom: rect.max_y,
+    })
+    scene.renderFrame()
   }
   doIters()
 }
@@ -392,60 +396,13 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
 
 
 
-function findPath(from,to){
 
-  const pathFinder = aStar(graph)
-
-  function _findPath(from, to){
-    console.log('_',from,to)
-    const p = pathFinder.find(to,from)
-    console.log(p)
-    /*
-    if (p.length > 2 ) {
-      for ( let i = 0; i < (p.length -1); i++ ){
-        if (p[i].links.length > 2) {
-          const prev = i > 0 ? p[i-1].id : from
-          const next = i < p[i].links.length ? p[i+1].id :  to
-          const current = p[i].id
-          console.log(current)
-          //console.log(prev,current,next)
-          for ( const link of p[i].links) {
-            //console.log(link)
-            if (!(link.fromId === parent || link.toId === parent)) {
-              if (!(link.fromId === next || link.toId === next)) {
-                //console.log('___',link)
-                const split = link.fromId === current ? link.toId : link.fromId
-                //console.log('split',split)
-                const ppp = pathFinder.find(from, split)
-                //drawPath(ppp,textColor)
-                //console.log(ppp)
-                if (ppp.length > 1 && (ppp[1].id !== current || ppp[1].id !== prev || ppp[1].id !== next)) {
-                  //_findPath(from, split)
-                }
-
-              }
-              //console.log(i,link)
-              //const ppp = _findPath(link,to)
-            }
-          }
-          //const pp = pathFinder.find(p[0].id,to)
-          break
-        } else {
-          console.log(p[i].id)
-        }
-      }
-    }
-    */
-    const sg = new ngraph()
-    for (const n of p) sg.addNode(n.id)
-    for (let i = 0; i < (p.length -1); i++ ) sg.addLink(p[i].id,p[i+1].id)
-    return sg
-  }
-
-  const connetion = _findPath(from,to)
-  const linksCount = connetion.getLinksCount()
-  console.log(linksCount,connetion)
-  return linksCount ? connetion : undefined
+function findPathAStar(from,to){
+  let pathFinder = aStar(graph)
+  const result = new ngraph()
+  const path = pathFinder.find(to,from)
+  if (path.length) for (let i = 0; i < (path.length -1); i++ ) result.addLink(path[i].id,path[i+1].id)
+  return result.getLinksCount() ? result : undefined
 }
 
 function drawPath(connetion, color){
@@ -459,26 +416,26 @@ function drawPath(connetion, color){
   }
 }
 function drawSubGraphLinks(subg, lcolor, ncolor){
-  if (!ncolor) ncolor = lcolor
+  ncolor = ncolor ? ncolor : ( lcolor ? lcolor : undefined)
   subg.forEachLink((l) => {
-    console.log(l)
     let link
     link = graph.getLink(l.fromId,l.toId)
     if (!link) link = graph.getLink(l.toId,l.fromId)
-    if (lcolor) link.ui.colorOrig = link.ui.color
-    else lcolor = link.ui.colorOrig
-    link.ui.color = lcolor
+    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : linkColor)
     lines.update(link.uiId,link.ui)
   })
-  /*
+
   subg.forEachNode((n) => {
     const node = graph.getNode(n.id)
-    if (ncolor) node.ui.colorOrig = node.ui.color
-    else ncolor = node.ui.colorOrig
-    node.ui.color = ncolor
+    node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
     nodes.update(node.uiId,node.ui)
   })
-  */
+
+}
+
+function drawNode(node, ncolor) {
+  node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
+  nodes.update(node.uiId,node.ui)
 }
 
   onMount( () => {
@@ -523,22 +480,22 @@ function drawSubGraphLinks(subg, lcolor, ncolor){
                 }
               }
               mouseOnNode =  { oldcolor: node.ui.color, node}
-              dispatch('mouseOnNode', node)
+              //dispatch('mouseOnNode', node)
               node.ui.color = highlightColor
               nodes.update(node.uiId, node.ui)
               let connetion
               if (clickedNode) {
                 if (clickedNode.connetion ) {
-                  //drawPath(clickedNode.connetion,linkColor)
                   drawSubGraphLinks(clickedNode.connetion)
                 }
-                connetion = findPath(clickedNode.node.id,node.id)
+                connetion = findPath(graph,clickedNode.node.id,node.id)
                 clickedNode.connetion = connetion
               }
               if (connetion) {
                 drawSubGraphLinks(connetion, highlightColor)
                 dispatch('mouseOnPath', connetion)
               } else {
+                dispatch('mouseOnNode', node)
                 for (const link of node.links){
                   link.ui.color = highlightColor
                   lines.update(link.uiId,link.ui)
@@ -546,7 +503,7 @@ function drawSubGraphLinks(subg, lcolor, ncolor){
               }
               scene.renderFrame()
             }
-        },150)
+        },50)
       })
       scene.on('click',(e)=>{
         const node = xyisnode(e.x,e.y,e.z)
@@ -561,8 +518,7 @@ function drawSubGraphLinks(subg, lcolor, ncolor){
             mouseOnNode = undefined
           }
           if (clickedNode) {
-            if (clickedNode.connetion && clickedNode.connetion.length) {
-              console.log('linked path',clickedNode.connetion)
+            if (clickedNode.connetion) {
               dispatch('clickOnPath', clickedNode.connetion)
             }
             clickedNode.node.ui.color = clickedNode.oldcolor
@@ -573,8 +529,8 @@ function drawSubGraphLinks(subg, lcolor, ncolor){
             }
           }
           if (!clickedNode || clickedNode.node.id !== node.id){
+            if (!(clickedNode && clickedNode.connetion)) dispatch('clickOnNode', node)
             clickedNode =  {oldcolor:node.ui.color, node}
-            dispatch('clickOnNode', node)
             node.ui.color = highlightColor
             nodes.update(node.uiId, node.ui)
             }
