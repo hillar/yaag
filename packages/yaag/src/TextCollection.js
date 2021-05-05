@@ -1,7 +1,11 @@
 import { defineProgram, ColorAttribute, InstancedAttribute, GLCollection } from 'w-gl';
 
 export default class ColoredTextCollection extends GLCollection {
-  constructor(gl, notifyReady, options = {}) {
+  constructor(gl,
+    fontjson = 'https://raw.githubusercontent.com/hillar/yaag/tree/main/packages/yaag/src/Roboto.json',
+    fontpng = 'https://raw.githubusercontent.com/hillar/yaag/tree/main/packages/yaag/src/Roboto0.png',
+    notifyReady, options = {}) {
+
     gl.getExtension('OES_standard_derivatives');
 
     super(getTextProgram(gl, options));
@@ -15,9 +19,7 @@ export default class ColoredTextCollection extends GLCollection {
     this.opacity = options.opacity !== undefined ? options.opacity : 1;
     this.fontInfo = null;
 
-    //let fontPath = 'fonts';
-		let fontPath = 'https://raw.githubusercontent.com/anvaka/graph-start/master/public/fonts'
-    fetch(`${fontPath}/Roboto.json`, { mode: 'cors' })
+    fetch(fontjson, { mode: 'cors' })
       .then((x) => x.json())
       .then((fontInfo) => {
         this.fontInfo = fontInfo;
@@ -26,6 +28,9 @@ export default class ColoredTextCollection extends GLCollection {
           let charValue = String.fromCharCode(char.id);
           this.alphabet.set(charValue, char);
         });
+        this.msdfImage.onerror = () => {
+          console.error('error',this.msdfImage.src)
+        }
         this.msdfImage.onload = () => {
           this._sdfTextureChanged = true;
           this.program.setTextureCanvas('msdf', this.msdfImage);
@@ -37,9 +42,9 @@ export default class ColoredTextCollection extends GLCollection {
           this.queue = [];
           notifyReady();
         };
-        this.msdfImage.src = `${fontPath}/Roboto0.png`;
+        this.msdfImage.src = fontpng
       })
-      .catch((error)=>{ console.error(error) });
+      .catch((error)=>{ console.error('error',fontjson) });
   }
 
   clear() {

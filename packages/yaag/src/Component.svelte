@@ -14,6 +14,8 @@
 
   import { onMount, createEventDispatcher } from 'svelte'
 
+  export let fontJSON
+  export let fontPNG
   export let nodeColor = 0xddaaaa
   export let lineColor = 0xffffff50
   export let textColor = 0xffffff
@@ -23,6 +25,7 @@
   export let parentColor = 0xddaaaa
   export let spehereRadius = 5
   export let findPath = findPathAStar
+  export let icons = []
 
   const aStar = paths.aStar
 
@@ -99,7 +102,7 @@ let frameToken = 0
   function initScene() {
     scene = createScene(canvas);
     // TODO better way to wait for textcolletion is ready
-    texts = new TextCollection(scene.getGL(),()=>{updatePositions(); scene.renderFrame()})
+    texts = new TextCollection(scene.getGL(),fontJSON,fontPNG,()=>{updatePositions(); scene.renderFrame()})
     //scene.setClearColor(0x0f / 255, 0x0f / 0, 0x0f / 0, .5);
     graph = new ngraph()
     layout = forcelayout(graph, physicsSettings)
@@ -150,7 +153,7 @@ function _add(parent, childs) {
       id: node.id,
 			x: point.x,
 			y: point.y,
-			text: node.data.label ? ''+node.datal.label : ''+node.id,
+			text: node.data.label ? ''+node.data.label : ''+node.id,
 			color: textColor
 		});
 
