@@ -18,13 +18,13 @@
   export let fontJSON
   export let fontPNG
   export let sceneColor = toRGBA('white')
-  export let nodeColor = toWGL('seagreen')
-  export let lineColor = toWGL('green')
-  export let textColor = toWGL('darkgreen')
-  export let rootColor = toWGL('lightgreen')
-  export let highlightColor = toWGL('yellowgreen')
-  export let childColor = toWGL('darkseagreen')
-  export let parentColor = toWGL('seagreen')
+  export let nodeColor = toWGL('yellowgreen')
+  export let lineColor = toWGL('yellowgreen')
+  export let textColor = toWGL('black')
+  export let rootColor = toWGL('yellowgreen')
+  export let highlightColor = toWGL('indianred')
+  export let childColor = toWGL('yellowgreen')
+  export let parentColor = toWGL('yellowgreen')
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = {}
@@ -133,8 +133,6 @@ function _add(parent, childs) {
       let nodeRoot = graph.getNode(parent.id)
 			nodeRoot.data.size = nodeRoot.data.size ?  nodeRoot.data.size : spehereRadius * 4
 			nodeRoot.data.color = nodeRoot.data.color ?  nodeRoot.data.color : rootColor
-      nodeRoot.data.type = nodeRoot.data.type ?  nodeRoot.data.type : 'root'
-      //nodeRoot.data.type = nodeRoot.data.type ? nodeRoot.data.type : 'root'
       layout.pinNode(nodeRoot, true)
       layout.setNodePosition(parent.id, 0, 0, 0)
       needBirdView = true
@@ -161,7 +159,6 @@ function _add(parent, childs) {
 			x: point.x,
 			y: point.y,
 			text: node.data.label ? ''+node.data.label : ''+node.id,
-      fontSize:4,
 			color: textColor
 		});
 
@@ -229,7 +226,6 @@ function _add(parent, childs) {
     			x: point.x,
     			y: point.y,
     			text: node.data.label ? ''+node.datal.label : ''+node.id,
-          fontSize:2,
     			color: textColor
     		});
       }
@@ -248,17 +244,12 @@ function _add(parent, childs) {
       }
     relayout()
   }
-  // relayout()
   if (needBirdView) {
     birdview()
   }
-  //resolve()
-  //})
-
 }
 
 function _relayout() {
-
   renderFrame()
 }
 
@@ -504,7 +495,6 @@ function drawNode(node, ncolor) {
                 }
               }
               mouseOnNode =  { oldcolor: node.ui.color, node}
-              //dispatch('mouseOnNode', node)
               node.ui.color = highlightColor
               nodes.update(node.uiId, node.ui)
               let connetion

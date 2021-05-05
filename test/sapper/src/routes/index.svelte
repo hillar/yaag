@@ -353,7 +353,7 @@ const fp = (graph, from, to) => {
 			result.addLink(path[i].id,path[i+1].id)
 			walked.push(path[i+1].id)
 		}
-		console.log(walked.join('-'))
+		//console.log(walked.join('-'))
 		graph.forEachNode( node => {
 			if (node.links.length < 2 || walked.includes(node.id)) return
 			walked.push(node.id)
@@ -370,7 +370,7 @@ const fp = (graph, from, to) => {
 					}
 					p2to.unshift(tmp)
 					const np = [...p2from.reverse(), ...p2to]
-					console.log(np.map(x=>x.id).join('-'))
+					//console.log(np.map(x=>x.id).join('-'))
 					for (let i = 0; i < (np.length -1); i++ ) {
 						result.addLink(np[i].id,np[i+1].id)
 					}
