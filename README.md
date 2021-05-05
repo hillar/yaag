@@ -1,2 +1,5 @@
-# yaag
-yet another anvaka graph
+# Yet another NPM package
+
+## yaag
+
+svelte component: yet another anvaka graph

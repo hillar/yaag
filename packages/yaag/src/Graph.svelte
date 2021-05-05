@@ -5,27 +5,29 @@
   import createtree from 'yaot'
   import paths from 'ngraph.path'
 
-  import { toWGL, toRGBA } from './colors.mjs'
+
   import PointCollection from './PointCollection.js'
   import LineCollection from './LineCollection.js'
   import TextCollection from './TextCollection.js'
-
+  import { toWGL, toRGBA } from './colors.mjs'
   import Loading from './Loading.svelte'
+  import {icons as defaultIcons} from './icons.mjs'
 
   import { onMount, createEventDispatcher } from 'svelte'
 
   export let fontJSON
   export let fontPNG
+  export let sceneColor = toRGBA('white')
   export let nodeColor = toWGL('seagreen')
-  export let lineColor = toWGL(255,255,255,.3)
-  export let textColor = toWGL(255,255,255,.5)
+  export let lineColor = toWGL('green')
+  export let textColor = toWGL('darkgreen')
   export let rootColor = toWGL('lightgreen')
   export let highlightColor = toWGL('yellowgreen')
   export let childColor = toWGL('darkseagreen')
   export let parentColor = toWGL('seagreen')
   export let spehereRadius = 5
   export let findPath = findPathAStar
-  export let icons = []
+  export let icons = {}
 
   const aStar = paths.aStar
 
@@ -89,6 +91,7 @@ let scene
 let graph
 let layout
 let nodes
+let pnodes
 let lines
 let texts
 
@@ -103,14 +106,17 @@ let frameToken = 0
     scene = createScene(canvas);
     // TODO better way to wait for textcolletion is ready
     texts = new TextCollection(scene.getGL(),fontJSON,fontPNG,()=>{updatePositions(); scene.renderFrame()})
-    //scene.setClearColor(0x0f / 255, 0x0f / 0, 0x0f / 0, .5);
+    const {r,g,b,a} = sceneColor
+    scene.setClearColor(r,g,b,a);
     graph = new ngraph()
     layout = forcelayout(graph, physicsSettings)
     lines = new LineCollection(scene.getGL())
     nodes = new PointCollection(scene.getGL())
+    pnodes = new LineCollection(scene.getGL())
 
     scene.appendChild(lines)
     scene.appendChild(nodes)
+    scene.appendChild(pnodes)
     scene.appendChild(texts)
 
   }
@@ -127,6 +133,7 @@ function _add(parent, childs) {
       let nodeRoot = graph.getNode(parent.id)
 			nodeRoot.data.size = nodeRoot.data.size ?  nodeRoot.data.size : spehereRadius * 4
 			nodeRoot.data.color = nodeRoot.data.color ?  nodeRoot.data.color : rootColor
+      nodeRoot.data.type = nodeRoot.data.type ?  nodeRoot.data.type : 'root'
       //nodeRoot.data.type = nodeRoot.data.type ? nodeRoot.data.type : 'root'
       layout.pinNode(nodeRoot, true)
       layout.setNodePosition(parent.id, 0, 0, 0)
@@ -154,6 +161,7 @@ function _add(parent, childs) {
 			x: point.x,
 			y: point.y,
 			text: node.data.label ? ''+node.data.label : ''+node.id,
+      fontSize:4,
 			color: textColor
 		});
 
@@ -196,17 +204,11 @@ function _add(parent, childs) {
           color: node.data.color || childColor,
         }
 
-        texts.addText({
-          id: node.id,
-    			x: point.x - node.data.size ,
-    			y: point.y - node.data.size,
-    			text: node.data.label ? ''+node.datal.label : ''+node.id,
-    			color: textColor
-    		});
 
-        //node.uiId = nodes.add(node.ui)
+
 
         if (node.data.type && icons[node.data.type]){
+
           node.puiIds = []
           const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
           for (const c in icon){
@@ -222,6 +224,14 @@ function _add(parent, childs) {
         } else {
           node.uiId = nodes.add(node.ui)
         }
+        texts.addText({
+          id: node.id,
+    			x: point.x,
+    			y: point.y,
+    			text: node.data.label ? ''+node.datal.label : ''+node.id,
+          fontSize:2,
+    			color: textColor
+    		});
       }
       if (!graph.hasLink(parent.id, child.id)) {
         graph.addLink(parent.id, child.id, child.linkdata)
@@ -269,7 +279,9 @@ function updatePositions() {
 
     for (const p of uiPosition) tmp.push(p)
     idxPositions.push(node.id)
+    let movetext = 0
     if (node.puiIds){
+      movetext = 2
       let point = pos
       const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
       for (const {id,i,c} of node.puiIds){
@@ -283,8 +295,8 @@ function updatePositions() {
 
     texts.updateText({
       id: node.id,
-			x: pos.x -  node.data.size/2 ,
-			y: pos.y  + node.data.size/2 ,
+			x: pos.x - movetext, // -  node.data.size/2 ,
+			y: pos.y + movetext, //  + node.data.size/2 ,
 			color: textColor
 		});
 
@@ -471,6 +483,10 @@ function drawNode(node, ncolor) {
       }
     }
     */
+      for (const key of Object.keys(defaultIcons)) {
+        if (!icons[key]) icons[key] = defaultIcons[key]
+      }
+
       let waitformousetostop
       let mouseOnNode
       let clickedNode

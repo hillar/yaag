@@ -3,6 +3,7 @@ import { onMount } from 'svelte'
 import Graph from '../../../../packages/yaag/src/index.mjs'
 import ngraph from 'ngraph.graph'
 import { aStar } from 'ngraph.path'
+import {icons} from '../../../../packages/yaag/src/icons.mjs'
 
 let graph
 
@@ -34,6 +35,10 @@ onMount( async () => {
   graph.add('44','55')
 
   graph.add('y',['a1','b1','c1'])
+
+  for (const key of Object.keys(icons)){
+    graph.add('icons',{id:key,data:{type:key}})
+  }
   /*
   const circle = [1,2,3,4,5,6,7,8,9,0]
   //for (let i = 0; i < (circle.length -1); i++ ) graph.add(''+circle[i],''+circle[i+1])
