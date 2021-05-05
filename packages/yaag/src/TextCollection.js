@@ -2,8 +2,8 @@ import { defineProgram, ColorAttribute, InstancedAttribute, GLCollection } from 
 
 export default class ColoredTextCollection extends GLCollection {
   constructor(gl,
-    fontjson = 'https://raw.githubusercontent.com/hillar/yaag/tree/main/packages/yaag/src/Roboto.json',
-    fontpng = 'https://raw.githubusercontent.com/hillar/yaag/tree/main/packages/yaag/src/Roboto0.png',
+    fontjson = 'https://raw.githubusercontent.com/hillar/yaag/main/packages/yaag/src/Roboto.json',
+    fontpng = 'https://raw.githubusercontent.com/hillar/yaag/main/packages/yaag/src/Roboto0.png',
     notifyReady, options = {}) {
 
     gl.getExtension('OES_standard_derivatives');
