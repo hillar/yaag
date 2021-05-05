@@ -1,35 +1,16 @@
 <script>
+
 import { onMount } from 'svelte'
-import Graph from '../../../../packages/yaag/src/Component.svelte'
+import Graph from '@hillar/yaag'
 
 let graph
-
-let debug
-
-
-
-$: debug = graph
 
 onMount( () => {
   graph.add('kala','maja')
 })
 
-
-
 </script>
 
-<div class="" style="height:15em; width:20em; background-color:red;">
+<div class="" style="height:15em; width:20em;">
     <Graph bind:this="{graph}"/>
 </div>
-
-
-<small>
-<small>
-  <hr>
-<pre>
-
- {JSON.stringify(debug,null,4)}
-
-</pre>
-</small>
-</small>

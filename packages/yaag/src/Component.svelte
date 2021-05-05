@@ -3,7 +3,7 @@
   import ngraph from 'ngraph.graph'
   import forcelayout from 'ngraph.forcelayout'
   import createtree from 'yaot'
-  import { aStar } from 'ngraph.path'
+  import paths from 'ngraph.path'
 
   import {style2rgba, toColor, toRgba} from './colors.mjs'
   import PointCollection from './PointCollection.js'
@@ -23,6 +23,8 @@
   export let parentColor = 0xddaaaa
   export let spehereRadius = 5
   export let findPath = findPathAStar
+
+  const aStar = paths.aStar
 
   const ITERATIONS_COUNT = 10000
   const intersectSphereRadius = 20 // TODO set depending on graph nodes size
@@ -398,6 +400,7 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
 
 
 function findPathAStar(graph,from,to){
+
   let pathFinder = aStar(graph)
   const result = new ngraph()
   const path = pathFinder.find(to,from)
@@ -440,8 +443,10 @@ function drawNode(node, ncolor) {
 
   onMount( () => {
     //TODO get colors from style
+    /*
     let cs = getComputedStyle(viewport)
     let color = cs.getPropertyValue('color')
+    */
     initScene()
     /*
     background-color

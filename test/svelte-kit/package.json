@@ -4,13 +4,14 @@
   "scripts": {
     "dev": "svelte-kit dev",
     "build": "svelte-kit build",
-    "start": "svelte-kit start"
+    "preview": "svelte-kit preview"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "next",
+    "@hillar/yaag": "0.0.10",
     "@sveltejs/kit": "next",
-    "svelte": "^3.29.0",
-    "vite": "^2.1.0"
+    "svelte": "^3.34.0",
+    "vite": "^2.2.3"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {}
 }
