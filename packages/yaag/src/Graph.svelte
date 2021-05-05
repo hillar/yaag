@@ -5,7 +5,7 @@
   import createtree from 'yaot'
   import paths from 'ngraph.path'
 
-  import {style2rgba, toColor, toRgba} from './colors.mjs'
+  import { toWGL, toRGBA } from './colors.mjs'
   import PointCollection from './PointCollection.js'
   import LineCollection from './LineCollection.js'
   import TextCollection from './TextCollection.js'
@@ -16,13 +16,13 @@
 
   export let fontJSON
   export let fontPNG
-  export let nodeColor = 0xddaaaa
-  export let lineColor = 0xffffff50
-  export let textColor = 0xffffff
-  export let rootColor = 0xffaaaa
-  export let highlightColor = -65281
-  export let childColor = 0xddaaaa  //0x90f8fcff
-  export let parentColor = 0xddaaaa
+  export let nodeColor = toWGL('seagreen')
+  export let lineColor = toWGL(255,255,255,.3)
+  export let textColor = toWGL(255,255,255,.5)
+  export let rootColor = toWGL('lightgreen')
+  export let highlightColor = toWGL('yellowgreen')
+  export let childColor = toWGL('darkseagreen')
+  export let parentColor = toWGL('seagreen')
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = []
