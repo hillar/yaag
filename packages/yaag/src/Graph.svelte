@@ -17,14 +17,16 @@
 
   export let fontJSON
   export let fontPNG
+
   export let sceneColor = toRGBA('white')
   export let nodeColor = toWGL('yellowgreen')
   export let lineColor = toWGL('yellowgreen')
   export let textColor = toWGL('black')
-  export let rootColor = toWGL('yellowgreen')
   export let highlightColor = toWGL('indianred')
-  export let childColor = toWGL('yellowgreen')
+  export let rootColor = toWGL('yellowgreen')
   export let parentColor = toWGL('yellowgreen')
+  export let childColor = toWGL('yellowgreen')
+
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = {}
@@ -32,7 +34,7 @@
   const aStar = paths.aStar
 
   const ITERATIONS_COUNT = 10000
-  const intersectSphereRadius = 20 // TODO set depending on graph nodes size
+  const intersectSphereRadius = spehereRadius * 4 // TODO set depending on graph nodes size
   let X, Y
   const _dispatch = createEventDispatcher()
   const dispatch = (n,d) => {
@@ -424,6 +426,7 @@ function drawPath(connetion, color){
     }
   }
 }
+
 function drawSubGraphLinks(subg, lcolor, ncolor){
   ncolor = ncolor ? ncolor : ( lcolor ? lcolor : undefined)
   subg.forEachLink((l) => {
@@ -487,6 +490,7 @@ function drawNode(node, ncolor) {
             const node = xyisnode(e.x,e.y,e.z)
             if (node) {
               if (mouseOnNode) {
+                if (mouseOnNode.node.id === node.id) return
                 mouseOnNode.node.ui.color = mouseOnNode.oldcolor
                 nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
                 for (const link of mouseOnNode.node.links){
