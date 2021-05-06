@@ -117,7 +117,7 @@ let frameToken = 0
     layout = forcelayout(graph, physicsSettings)
     lines = new LineCollection(scene.getGL())
     nodes = new PointCollection(scene.getGL())
-    pnodes = new LineCollection(scene.getGL())
+    pnodes = new LineCollection(scene.getGL(),{width:4})
 
     scene.appendChild(lines)
     scene.appendChild(nodes)
@@ -411,7 +411,6 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
 
 
 function findPathAStar(graph,from,to){
-
   let pathFinder = aStar(graph)
   const result = new ngraph()
   const path = pathFinder.find(to,from)
@@ -433,8 +432,14 @@ function drawPath(connetion, color){
 function drawNode(node, ncolor, lcolor) {
   lcolor = lcolor ? lcolor : ncolor
   node = node.id ? node : graph.getNode(node)
+
   node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
-  nodes.update(node.uiId,node.ui)
+  if (node.puiIds) {
+    for (const {id,i,c} of node.puiIds){
+        const { from, to } = pnodes.get(id)
+        pnodes.update(id,{ from, to, color: node.ui.color })
+    }
+  } else nodes.update(node.uiId,node.ui)
   for (const link of node.links){
     link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : linkColor)
     lines.update(link.uiId,link.ui)
