@@ -23,6 +23,7 @@
   export let lineColor = toWGL('yellowgreen')
   export let textColor = toWGL('black')
   export let highlightColor = toWGL('indianred')
+  export let clickedColor = toWGL('red')
   export let rootColor = toWGL('yellowgreen')
   export let parentColor = toWGL('yellowgreen')
   export let childColor = toWGL('yellowgreen')
@@ -96,6 +97,8 @@ let nodes
 let pnodes
 let lines
 let texts
+let mouseOnNode
+let clickOnNode
 
 //let nodesCount = graph.getNodesCount()
 //let linksCount = graph.getLinksCount()
@@ -427,7 +430,24 @@ function drawPath(connetion, color){
   }
 }
 
-function drawSubGraphLinks(subg, lcolor, ncolor){
+function drawNode(node, ncolor, lcolor) {
+  lcolor = lcolor ? lcolor : ncolor
+  node = node.id ? node : graph.getNode(node)
+  node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
+  nodes.update(node.uiId,node.ui)
+  for (const link of node.links){
+    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : linkColor)
+    lines.update(link.uiId,link.ui)
+  }
+}
+
+function drawSubGraphLinks(subg,ncolor,lcolor){
+  subg.forEachNode((n) => {
+    if (clickOnNode && clickOnNode.node.id === n.id) return
+    //if (mouseOnNode && mouseOnNode.node.id == n.id) return
+    drawNode(n.id,ncolor,lcolor)
+  })
+  /*
   ncolor = ncolor ? ncolor : ( lcolor ? lcolor : undefined)
   subg.forEachLink((l) => {
     let link
@@ -442,14 +462,14 @@ function drawSubGraphLinks(subg, lcolor, ncolor){
     node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
     nodes.update(node.uiId,node.ui)
   })
-
+  */
 }
-
+/*
 function drawNode(node, ncolor) {
   node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
   nodes.update(node.uiId,node.ui)
 }
-
+*/
   onMount( () => {
     //TODO get colors from style
     /*
@@ -482,44 +502,41 @@ function drawNode(node, ncolor) {
       }
 
       let waitformousetostop
-      let mouseOnNode
-      let clickedNode
+
       scene.on('mousemove',(e)=>{
         clearTimeout(waitformousetostop)
         waitformousetostop = setTimeout(() => {
+            if (clickOnNode && clickOnNode.endpoint) return
             const node = xyisnode(e.x,e.y,e.z)
             if (node) {
+              if (clickOnNode && clickOnNode.node.id === node.id) {
+                if (clickOnNode.connetion) {
+                  drawSubGraphLinks(clickOnNode.connetion)
+                  clickOnNode.connetion = undefined
+                  scene.renderFrame()
+                }
+                return
+              }
               if (mouseOnNode) {
                 if (mouseOnNode.node.id === node.id) return
-                mouseOnNode.node.ui.color = mouseOnNode.oldcolor
-                nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
-                for (const link of mouseOnNode.node.links){
-                  link.ui.color = linkColor
-                  lines.update(link.uiId,link.ui)
-                }
+                drawNode(mouseOnNode.node)
               }
-
               let connetion
-              if (clickedNode) {
-                if (clickedNode.connetion ) {
-                  drawSubGraphLinks(clickedNode.connetion)
+              if (clickOnNode) {
+                if (clickOnNode.connetion ) {
+                  drawSubGraphLinks(clickOnNode.connetion)
                 }
-                connetion = findPath(graph,clickedNode.node.id,node.id)
-                clickedNode.connetion = connetion
+                connetion = findPath(graph,clickOnNode.node.id,node.id)
+                clickOnNode.connetion = connetion
               }
               if (connetion) {
                 drawSubGraphLinks(connetion, highlightColor)
                 dispatch('mouseOnPath', connetion)
               } else {
+                drawNode(node,highlightColor)
                 dispatch('mouseOnNode', node)
-                for (const link of node.links){
-                  link.ui.color = highlightColor
-                  lines.update(link.uiId,link.ui)
-                }
               }
-              mouseOnNode =  { oldcolor: node.ui.color, node}
-              node.ui.color = highlightColor
-              nodes.update(node.uiId, node.ui)
+              mouseOnNode =  { node }
               scene.renderFrame()
             }
         },50)
@@ -527,7 +544,48 @@ function drawNode(node, ncolor) {
       scene.on('click',(e)=>{
         const node = xyisnode(e.x,e.y,e.z)
         if (node) {
+          if (clickOnNode && clickOnNode.endpoint) {
+            console.log(clickOnNode.node.id, clickOnNode.endpoint.id)
+            drawSubGraphLinks(clickOnNode.connetion)
+            drawNode(clickOnNode.endpoint)
+            clickOnNode.endpoint = undefined
+            scene.renderFrame()
+            return
+          }
           if (mouseOnNode) {
+            if (mouseOnNode.node.id !== node.id) {
+            drawNode(mouseOnNode.node)
+            }
+            mouseOnNode = undefined
+          }
+          if (!clickOnNode) {
+            clickOnNode =  { node }
+            drawNode(node,clickedColor)
+            dispatch('clickOnNode', node)
+          } else {
+            if (clickOnNode.node.id === node.id) {
+                if (clickOnNode.connetion) drawSubGraphLinks(clickOnNode.connetion)
+                drawNode(node)
+                clickOnNode = undefined
+            } else {
+
+              if (clickOnNode.connetion) {
+                // keep it
+                drawNode(node,clickedColor)
+                clickOnNode.endpoint = node
+                dispatch('clickOnPath', clickOnNode.connetion)
+              } else {
+                drawNode(clickOnNode.node)
+                drawNode(node,clickedColor)
+                clickOnNode =  { node }
+                //drawNode(node,clickedColor)
+                dispatch('clickOnNode', node)
+              }
+
+            }
+          }
+          /*
+          if (mouseOnNode && mouseOnNode.node.id !== node.id) {
             mouseOnNode.node.ui.color = mouseOnNode.oldcolor
             nodes.update(mouseOnNode.node.uiId, mouseOnNode.node.ui)
             for (const link of mouseOnNode.node.links){
@@ -535,24 +593,25 @@ function drawNode(node, ncolor) {
               lines.update(link.uiId,link.ui)
             }
             mouseOnNode = undefined
-          }
-          if (clickedNode) {
-            if (clickedNode.connetion) {
-              dispatch('clickOnPath', clickedNode.connetion)
+          }*
+          if (clickOnNode) {
+            if (clickOnNode.connetion) {
+              dispatch('clickOnPath', clickOnNode.connetion)
             }
-            clickedNode.node.ui.color = clickedNode.oldcolor
-            nodes.update(clickedNode.node.uiId, clickedNode.node.ui)
-            if (clickedNode.connetion ) {
-              //drawPath(clickedNode.connetion,linkColor)
-              drawSubGraphLinks(clickedNode.connetion)
+            clickOnNode.node.ui.color = clickOnNode.oldcolor
+            nodes.update(clickOnNode.node.uiId, clickOnNode.node.ui)
+            if (clickOnNode.connetion ) {
+              //drawPath(clickOnNode.connetion,linkColor)
+              drawSubGraphLinks(clickOnNode.connetion)
             }
           }
-          if (!clickedNode || clickedNode.node.id !== node.id){
-            if (!(clickedNode && clickedNode.connetion)) dispatch('clickOnNode', node)
-            clickedNode =  {oldcolor:node.ui.color, node}
+          if (!clickOnNode || clickOnNode.node.id !== node.id){
+            if (!(clickOnNode && clickOnNode.connetion)) dispatch('clickOnNode', node)
+            clickOnNode =  {oldcolor:node.ui.color, node}
             node.ui.color = highlightColor
             nodes.update(node.uiId, node.ui)
             }
+            */
           scene.renderFrame()
         }
       })

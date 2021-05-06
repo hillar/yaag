@@ -342,44 +342,60 @@ const findPathD = (graph,from,to) => {
     return result.getLinksCount() ? result : undefined
   }
 
-const fp = (graph, from, to) => {
-	let pathFinder = aStar(graph)
-	const result = new ngraph()
-	const path = pathFinder.find(to,from)
-	if (path.length) {
-		const walked = []
-		walked.push(path[0].id)
-		for (let i = 0; i < (path.length -1); i++ ) {
-			result.addLink(path[i].id,path[i+1].id)
-			walked.push(path[i+1].id)
-		}
-		//console.log(walked.join('-'))
-		graph.forEachNode( node => {
-			if (node.links.length < 2 || walked.includes(node.id)) return
-			walked.push(node.id)
-			const p2from = pathFinder.find(from,node.id)
-			if (p2from.length) {
-				const p2to = pathFinder.find(to,node.id)
-				if (p2to.length) {
-					for (const {id} of p2to) walked.push(id)
-					for (const {id} of p2from) walked.push(id)
-					let tmp
-					while (p2to.length > 0 && p2from.length > 0 && p2to[0].id === p2from[0].id) {
-							tmp = p2to.shift()
-							p2from.shift()
-					}
-					p2to.unshift(tmp)
-					const np = [...p2from.reverse(), ...p2to]
-					//console.log(np.map(x=>x.id).join('-'))
-					for (let i = 0; i < (np.length -1); i++ ) {
-						result.addLink(np[i].id,np[i+1].id)
-					}
-				}
-			}
-		})
-	}
-	return result.getLinksCount() ? result : undefined
-}
+  const fp = (graph, from, to) => {
+  	let pathFinder = aStar(graph)
+  	const result = new ngraph()
+  	const path = pathFinder.find(to,from)
+  	if (path.length) {
+  		const walked = []
+  		walked.push(path[0].id)
+  		for (let i = 0; i < (path.length -1); i++ ) {
+  			result.addLink(path[i].id,path[i+1].id)
+  			walked.push(path[i+1].id)
+  		}
+  		//console.log(walked.join('-'))
+  		graph.forEachNode( node => {
+  			if (node.links.length < 2 || walked.includes(node.id)) return
+  			walked.push(node.id)
+  			const p2from = pathFinder.find(from,node.id)
+  			if (p2from.length) {
+  				const p2to = pathFinder.find(to,node.id)
+  				if (p2to.length) {
+  					for (const {id} of p2to) walked.push(id)
+  					for (const {id} of p2from) walked.push(id)
+  					let tmp
+  					while (p2to.length > 0 && p2from.length > 0 && p2to[0].id === p2from[0].id) {
+  							tmp = p2to.shift()
+  							p2from.shift()
+  					}
+  					p2to.unshift(tmp)
+  					const np = [...p2from.reverse(), ...p2to]
+  					const distinct = [ ...new Set(np.map(x=>x.id))]
+              if (distinct.length !== np.length) {
+                const map = new Map()
+                const loops = []
+                for (let i = 0; i < np.length; i++) {
+                  if (map.has(np[i].id)) {
+                    loops.push({id:np[i].id,s:map.get(np[i].id),e:i})
+                  } else map.set(np[i].id,i)
+                }
+                if (loops.length) {
+                  for (const loop of loops) {
+  									console.log(loop)
+                    np.splice(loop.s,loop.e-loop.s)
+                  }
+                }
+              }
+  					//console.log(np.map(x=>x.id).join('-'))
+  					for (let i = 0; i < (np.length -1); i++ ) {
+  						result.addLink(np[i].id,np[i+1].id)
+  					}
+  				}
+  			}
+  		})
+  	}
+  	return result.getLinksCount() ? result : undefined
+  }
 
 </script>
 
@@ -392,4 +408,4 @@ const fp = (graph, from, to) => {
 		<button on:click="{graph.relayout()}"> o </button>
     <button on:click="{graph.birdview()}"> v </button>
 </div>
-    <!--findPath="{findPathD}" -->
+    <!--     findPath="{fp}" -->
