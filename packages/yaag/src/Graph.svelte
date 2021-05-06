@@ -498,9 +498,7 @@ function drawNode(node, ncolor) {
                   lines.update(link.uiId,link.ui)
                 }
               }
-              mouseOnNode =  { oldcolor: node.ui.color, node}
-              node.ui.color = highlightColor
-              nodes.update(node.uiId, node.ui)
+
               let connetion
               if (clickedNode) {
                 if (clickedNode.connetion ) {
@@ -519,6 +517,9 @@ function drawNode(node, ncolor) {
                   lines.update(link.uiId,link.ui)
                 }
               }
+              mouseOnNode =  { oldcolor: node.ui.color, node}
+              node.ui.color = highlightColor
+              nodes.update(node.uiId, node.ui)
               scene.renderFrame()
             }
         },50)
