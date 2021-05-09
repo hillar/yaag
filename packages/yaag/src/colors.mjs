@@ -236,3 +236,5 @@ export function WGLtoRgba(x) {
     a:(((x) & 0xff )/255).toPrecision(2)
   };
 }
+
+// 0xRRGGBBAA

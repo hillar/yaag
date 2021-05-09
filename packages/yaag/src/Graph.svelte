@@ -45,6 +45,13 @@
 
   let linkColor = lineColor
 
+  export function clear(){
+    graph.clear()
+    initScene()
+  }
+
+
+
   export function add(parent,childs) {
     return _add(parent,childs)
   }
@@ -91,7 +98,7 @@ let physicsSettings = {
     }
 }
 let scene
-let graph
+export let graph
 let layout
 let nodes
 let pnodes

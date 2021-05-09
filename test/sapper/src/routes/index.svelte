@@ -371,21 +371,20 @@ const findPathD = (graph,from,to) => {
   					p2to.unshift(tmp)
   					const np = [...p2from.reverse(), ...p2to]
   					const distinct = [ ...new Set(np.map(x=>x.id))]
-              if (distinct.length !== np.length) {
-                const map = new Map()
-                const loops = []
-                for (let i = 0; i < np.length; i++) {
-                  if (map.has(np[i].id)) {
-                    loops.push({id:np[i].id,s:map.get(np[i].id),e:i})
-                  } else map.set(np[i].id,i)
-                }
-                if (loops.length) {
-                  for (const loop of loops) {
-  									console.log(loop)
-                    np.splice(loop.s,loop.e-loop.s)
-                  }
+            if (distinct.length !== np.length) {
+              const map = new Map()
+              const loops = []
+              for (let i = 0; i < np.length; i++) {
+                if (map.has(np[i].id)) {
+                  loops.push({id:np[i].id,s:map.get(np[i].id),e:i})
+                } else map.set(np[i].id,i)
+              }
+              if (loops.length) {
+                for (const loop of loops) {
+                  np.splice(loop.s,loop.e-loop.s)
                 }
               }
+            }
   					//console.log(np.map(x=>x.id).join('-'))
   					for (let i = 0; i < (np.length -1); i++ ) {
   						result.addLink(np[i].id,np[i+1].id)
@@ -397,15 +396,42 @@ const findPathD = (graph,from,to) => {
   	return result.getLinksCount() ? result : undefined
   }
 
+  let currentNode
+  let currentPath
+  let graph2
+
 </script>
 
-<div class="" style="height:90vh; width:90vw; background-color:black;">
+<div class="" style="height:50vh; width:95vw; background-color:black;">
     <Graph
     bind:this="{graph}"
     findPath="{fp}"
     on:mouseOnNode="{({detail: node})=>{/*console.log('mouseOnNode',node)*/}}"
+    on:mouseOnNode="{({detail}) => { currentNode = detail.id}}"
+    on:mouseOnPath="{({detail}) => {
+      currentPath = detail
+      graph2.clear()
+      currentPath.forEachLink( ({fromId, toId}) => {
+        graph2.add(fromId, toId)
+      })
+      graph2.relayout()
+    }}"
     />
-		<button on:click="{graph.relayout()}"> o </button>
-    <button on:click="{graph.birdview()}"> v </button>
+
 </div>
+<div class="" style="height:15vh; width:15vw; background-color:black;">
+    <Graph
+    bind:this="{graph2}"
+    findPath="{fp}"
+    sceneColor="blue"
+    />
+
+</div>
+<div class="">
+  <button on:click="{graph.relayout()}"> o </button>
+  <button on:click="{graph.birdview()}"> v </button>
+  {currentNode}
+  {currentPath}
+</div>
+
     <!--     findPath="{fp}" -->
