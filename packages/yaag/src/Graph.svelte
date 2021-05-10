@@ -32,8 +32,13 @@
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = {}
-  export let menus = {}
+  export let menus = []
   export let actions = []
+  const actionsMap = new Map()
+  const menusMap = new Map()
+
+  const defaultMenuNode = [{name:'bug',fn:(n,g)=>{console.dir({n,g})}}]
+  const defaultMenuGraph = [{name:'relayout',fn:relayout},{name:'birdview',fn:birdview}]
 
 
   let contextmenu
@@ -46,7 +51,7 @@
 
   const _dispatch = createEventDispatcher()
   const dispatch = (n,d) => {
-    console.log(n,d)
+    console.log('dispatch',n,d)
     _dispatch(n,d)
   }
 
@@ -489,6 +494,25 @@ function drawNode(node, ncolor) {
   nodes.update(node.uiId,node.ui)
 }
 */
+
+function parseAction(action) {
+  let name
+  let fn
+  if (typeof action === 'string') {
+    name = action
+    fn=(node)=>{dispatch(name,node)}
+  } else if (typeof action === 'function') {
+    name = action.name
+    fn = action
+  } else {
+    name = Object.keys(action)[0]
+    if (typeof action[name] === 'function') {
+      fn = action[name]
+    } else throw new Error('not a function: ' + name)
+  }
+  return {name , fn}
+}
+
   onMount( () => {
     //TODO get colors from style
     /*
@@ -519,6 +543,7 @@ function drawNode(node, ncolor) {
       for (const key of Object.keys(defaultIcons)) {
         if (!icons[key]) icons[key] = defaultIcons[key]
       }
+      /*
       const defaultMenus = {
             defaultNode:['remove','bug'],
             defaultGraph:['relayout','birdview','bug']
@@ -526,11 +551,34 @@ function drawNode(node, ncolor) {
       for (const key of Object.keys(defaultMenus)) {
           if (!menus[key]) menus[key] = defaultMenus[key]
       }
+      */
 
-      for (const key of Object.keys(menus)) {
-        for (const action of menus[key]) {
-          if (!actions.includes(action)) actions.push(action)
+
+
+      for (const action of actions) {
+        const { name, fn } = parseAction(action)
+        if (!actionsMap.has(name)) actionsMap.set(name,fn)
+        else throw new Error('duplicate action: ' + name)
+      }
+      for (const menu of menus) {
+        const name = Object.keys(menu)[0]
+        const ma = []
+        for (const action of menu[name]) {
+          const { name, fn } = parseAction(action)
+          if (!actionsMap.has(name)) actionsMap.set(name,fn)
+          else {
+            const ofn = actionsMap.get(name)
+            if (ofn.toString().replace(/\s/g, '') != fn.toString().replace(/\s/g, '')) throw new Error('conflicting function: ' + name +'\n\n'+ ofn.toString()+'\n\n'+fn.toString())
+          }
+          ma.push(name)
         }
+        menusMap.set(name,ma)
+      }
+      for (const {name, fn} of defaultMenuNode) {
+        if (!actionsMap.has(name)) actionsMap.set(name,fn)
+      }
+      for (const {name, fn} of defaultMenuGraph) {
+        if (!actionsMap.has(name)) actionsMap.set(name,fn)
       }
 
       let waitformousetostop
@@ -684,19 +732,9 @@ items="{contextmenu.menu}"
 fontsize={24}
 on:click={({detail})=>{
   //clickOnNode=false; mouseOnNode=false;
-  console.log(detail, contextmenu.node)
-  if (contextmenu.node) dispatch('menu', {node:contextmenu.node,action:detail})
-
-  if (detail === 'bug') {
-    if (contextmenu.node) console.dir(contextmenu.node)
-    else {
-      console.log(mouseOnNode,clickOnNode)
-    }
-  } else if (detail === 'relayout') {
-    relayout()
-  } else if (detail === 'birdview') {
-    birdview()
-  }
+  const fn = actionsMap.get(detail)
+  if (!fn) throw new Error('missing action function: '+ detail)
+  else fn(contextmenu.node,graph)
   }}
 on:cancel={(e)=>{contextmenu = undefined}}
 />
@@ -714,27 +752,32 @@ on:cancel={(e)=>{contextmenu = undefined}}
           X = e.clientX
           Y = e.clientY
           const node = xyisnode(x,y,z)
+          const menu = []
           if (node) {
-            const menu = []
             if (node.data.actions) {
               for (const action of node.data.actions) {
-                if (actions.includes(action)) menu.push(action)
-                else console.error(new Error('missing action: '+ action))
+                const  {name, fn} = parseAction(action)
+                if (!actionsMap.get(action)) actionsMap.set(name,fn)
+                // else TODO override existing !?
+                menu.push(name)
               }
             }
             if (node.data.menu) {
-              if (menus[node.data.menu]) {
-                for (const action of menus[node.data.menu]) {
+              if (menusMap.has(node.data.menu)) {
+                for (const action of menusMap.get(node.data.menu)) {
                   if (!menu.includes(action)) menu.push(action)
                 }
-              } else console.error(new Error('missing menu: '+node.data.menu))
+              } else throw new Error('missing menu: '+node.data.menu)
             }
-            for (const action of menus['defaultNode']) {
-              if (!menu.includes(action)) menu.push(action)
+            for (const {name} of defaultMenuNode) {
+              if (!menu.includes(name)) menu.push(name)
             }
             contextmenu = { menu, node}
           } else {
-            contextmenu = { menu:menus['defaultGraph'], node:null}
+            for (const {name} of defaultMenuGraph) {
+              if (!menu.includes(name)) menu.push(name)
+            }
+            contextmenu = { menu, node:null}
         }
         }
       }"

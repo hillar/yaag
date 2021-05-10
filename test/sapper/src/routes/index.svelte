@@ -11,10 +11,19 @@ let debug
 
 let tmp = []
 for (const key of Object.keys(icons)){
+
   tmp.push(key)
 }
-const actions = [...tmp]
-
+const sampleaction = (n,g) => {
+  console.log('sampleaction',n,g)
+}
+const embeded = () => {
+  console.log('embeded')
+}
+const actions = ['kala','justdispatch',sampleaction, embeded, {embeded2:embeded}, { noop: ()=>{} }]
+const menus = [{strings:["kala","maja"]},
+               {functions:[sampleaction, embeded]}
+               ]
 
 
 
@@ -44,7 +53,8 @@ onMount( async () => {
   graph.add('y',['a1','b1','c1'])
 
   for (const key of Object.keys(icons)){
-    graph.add('icons',{id:key,data:{actions:[key]}})
+    const mf = (n,g) => {console.log('mf '+ key)}
+    graph.add('icons',{id:key,data:{menu:'strings',actions:[key,mf,{'finx':(n,g)=>{console.log('fn',key);console.dir(n);console.dir(g);}}]}})
   }
   /*
   const circle = [1,2,3,4,5,6,7,8,9,0]
@@ -414,6 +424,7 @@ const findPathD = (graph,from,to) => {
     bind:this="{graph}"
     findPath="{fp}"
     actions="{actions}"
+    menus="{menus}"
     on:mouseOnNode="{({detail: node }) => {console.log('f1',node.id)}}"
     on:mouseOnNode="{({detail: node }) => {console.log('f2',node.id)}}"
     on:mouseOnPath="{({detail}) => {

@@ -90,8 +90,8 @@
 		 </svg>
   {:else}
      <text
-         x="{x+menuPositionX(i,l)-f/2 - (fontsize/2)}"
- 				 y="{y+menuPositionY(i,l)-f/2}"
+         x="{x+menuPositionX(i,l)-f/2}"
+ 				 y="{y+menuPositionY(i,l)-f/2+fontsize}"
          style="font: {fontsize/3}px sans-serif;"
          on:click="{()=>{dispatch('click',item)}}"
      >
