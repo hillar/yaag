@@ -12,6 +12,7 @@
   import { toWGL, toRGBA } from './colors.mjs'
   import Loading from './Loading.svelte'
   import {icons as defaultIcons} from './icons.mjs'
+  import Menu from './Menu.svelte'
 
   import { onMount, createEventDispatcher } from 'svelte'
 
@@ -31,12 +32,16 @@
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = {}
+  export let menus = {}
+
+  let contextmenu
+  let X, Y
 
   const aStar = paths.aStar
 
   const ITERATIONS_COUNT = 10000
   const intersectSphereRadius = spehereRadius * 4 // TODO set depending on graph nodes size
-  let X, Y
+
   const _dispatch = createEventDispatcher()
   const dispatch = (n,d) => {
     console.log(n,d)
@@ -512,6 +517,13 @@ function drawNode(node, ncolor) {
       for (const key of Object.keys(defaultIcons)) {
         if (!icons[key]) icons[key] = defaultIcons[key]
       }
+      const defaultMenus = {
+            defaultNode:['remove','bug'],
+            defaultGraph:['relayout','birdview','bug']
+            }
+      for (const key of Object.keys(defaultMenus)) {
+          if (!menus[key]) menus[key] = defaultMenus[key]
+      }
 
       let waitformousetostop
 
@@ -554,6 +566,7 @@ function drawNode(node, ncolor) {
         },50)
       })
       scene.on('click',(e)=>{
+        if (contextmenu) contextmenu = undefined
         const node = xyisnode(e.x,e.y,e.z)
         if (node) {
           if (clickOnNode && clickOnNode.endpoint) {
@@ -657,18 +670,32 @@ function drawNode(node, ncolor) {
 </style>
 
 <svelte-yaag-viewport bind:this={viewport}  >
+{#if (contextmenu && X && Y )}
+<Menu x="{X}" y="{Y}"
+items="{contextmenu.menu}"
+fontsize={24}
+on:click={(e)=>{clickOnNode=false; mouseOnNode=false; dispatch('menu', {node:contextmenu.node,selected:e.detail})}}
+on:cancel={(e)=>{contextmenu = undefined}}
+/>
+{/if}
     <canvas bind:this={canvas}
       on:contextmenu="{
         (e)=>{
           // TODO move it to scene if w-gl ready
           e.preventDefault();
+          if (contextmenu) {
+            contextmenu = undefined
+            return
+          }
           const {x,y,z} = scene.getSceneCoordinate(e.clientX, e.clientY)
+          X = e.clientX
+          Y = e.clientY
           const node = xyisnode(x,y,z)
           if (node) {
-            console.log('contextmenu',node)
+            contextmenu = { menu:menus['defaultNode'], node}
           } else {
-            console.log('contextmenu','MAIN')
-          }
+            contextmenu = { menu:menus['defaultGraph'], node:null}
+        }
         }
       }"
     />
