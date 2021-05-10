@@ -9,6 +9,13 @@ let graph
 
 let debug
 
+let tmp = []
+for (const key of Object.keys(icons)){
+  tmp.push(key)
+}
+const actions = [...tmp]
+
+
 
 
 $: debug = graph
@@ -37,7 +44,7 @@ onMount( async () => {
   graph.add('y',['a1','b1','c1'])
 
   for (const key of Object.keys(icons)){
-    graph.add('icons',{id:key,data:{type:key}})
+    graph.add('icons',{id:key,data:{actions:[key]}})
   }
   /*
   const circle = [1,2,3,4,5,6,7,8,9,0]
@@ -406,8 +413,9 @@ const findPathD = (graph,from,to) => {
     <Graph
     bind:this="{graph}"
     findPath="{fp}"
-    on:mouseOnNode="{({detail: node})=>{/*console.log('mouseOnNode',node)*/}}"
-    on:mouseOnNode="{({detail}) => { currentNode = detail.id}}"
+    actions="{actions}"
+    on:mouseOnNode="{({detail: node }) => {console.log('f1',node.id)}}"
+    on:mouseOnNode="{({detail: node }) => {console.log('f2',node.id)}}"
     on:mouseOnPath="{({detail}) => {
       currentPath = detail
       graph2.clear()

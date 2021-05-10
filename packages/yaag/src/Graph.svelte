@@ -33,6 +33,8 @@
   export let findPath = findPathAStar
   export let icons = {}
   export let menus = {}
+  export let actions = []
+
 
   let contextmenu
   let X, Y
@@ -181,7 +183,7 @@ function _add(parent, childs) {
 
     if (node.data.type && icons[node.data.type]){
       node.puiIds = []
-      const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
+      const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menu]
       for (const c in icon){
         for (let i = 1; i < icon[c].length; ++i) {
           const puid = pnodes.add({
@@ -224,7 +226,7 @@ function _add(parent, childs) {
         if (node.data.type && icons[node.data.type]){
 
           node.puiIds = []
-          const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
+          const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menu]
           for (const c in icon){
             for (let i = 1; i < icon[c].length; ++i) {
               const puid = pnodes.add({
@@ -291,7 +293,7 @@ function updatePositions() {
     if (node.puiIds){
       movetext = 2
       let point = pos
-      const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menuType]
+      const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menu]
       for (const {id,i,c} of node.puiIds){
           pnodes.update(id,{
             from: [icon[c][i-1][0]+point.x, icon[c][i-1][1]+point.y, pos.z || 0],
@@ -525,6 +527,12 @@ function drawNode(node, ncolor) {
           if (!menus[key]) menus[key] = defaultMenus[key]
       }
 
+      for (const key of Object.keys(menus)) {
+        for (const action of menus[key]) {
+          if (!actions.includes(action)) actions.push(action)
+        }
+      }
+
       let waitformousetostop
 
       scene.on('mousemove',(e)=>{
@@ -674,7 +682,22 @@ function drawNode(node, ncolor) {
 <Menu x="{X}" y="{Y}"
 items="{contextmenu.menu}"
 fontsize={24}
-on:click={(e)=>{clickOnNode=false; mouseOnNode=false; dispatch('menu', {node:contextmenu.node,selected:e.detail})}}
+on:click={({detail})=>{
+  //clickOnNode=false; mouseOnNode=false;
+  console.log(detail, contextmenu.node)
+  if (contextmenu.node) dispatch('menu', {node:contextmenu.node,action:detail})
+
+  if (detail === 'bug') {
+    if (contextmenu.node) console.dir(contextmenu.node)
+    else {
+      console.log(mouseOnNode,clickOnNode)
+    }
+  } else if (detail === 'relayout') {
+    relayout()
+  } else if (detail === 'birdview') {
+    birdview()
+  }
+  }}
 on:cancel={(e)=>{contextmenu = undefined}}
 />
 {/if}
@@ -692,7 +715,24 @@ on:cancel={(e)=>{contextmenu = undefined}}
           Y = e.clientY
           const node = xyisnode(x,y,z)
           if (node) {
-            contextmenu = { menu:menus['defaultNode'], node}
+            const menu = []
+            if (node.data.actions) {
+              for (const action of node.data.actions) {
+                if (actions.includes(action)) menu.push(action)
+                else console.error(new Error('missing action: '+ action))
+              }
+            }
+            if (node.data.menu) {
+              if (menus[node.data.menu]) {
+                for (const action of menus[node.data.menu]) {
+                  if (!menu.includes(action)) menu.push(action)
+                }
+              } else console.error(new Error('missing menu: '+node.data.menu))
+            }
+            for (const action of menus['defaultNode']) {
+              if (!menu.includes(action)) menu.push(action)
+            }
+            contextmenu = { menu, node}
           } else {
             contextmenu = { menu:menus['defaultGraph'], node:null}
         }
