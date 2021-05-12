@@ -749,8 +749,8 @@ on:cancel={(e)=>{contextmenu = undefined}}
             return
           }
           const {x,y,z} = scene.getSceneCoordinate(e.clientX, e.clientY)
-          X = e.clientX
-          Y = e.clientY
+          X = e.offsetX
+          Y = e.offsetY
           const node = xyisnode(x,y,z)
           const menu = []
           if (node) {

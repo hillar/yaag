@@ -1,5 +1,5 @@
 {
-  "version": "0.0.22",
+  "version": "0.0.23",
   "name": "@hillar/yaag",
   "module": "src/index.js",
   "scripts": {
