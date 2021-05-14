@@ -37,7 +37,7 @@
   const actionsMap = new Map()
   const menusMap = new Map()
 
-  const defaultMenuNode = [{name:'bug',fn:(n,g)=>{console.dir({n,g})}}]
+  const defaultMenuNode = [remove]
   const defaultMenuGraph = [{name:'relayout',fn:relayout},{name:'birdview',fn:birdview}]
 
 
@@ -63,6 +63,11 @@
   }
 
 
+  export function remove(node) {
+    if (!node.id) node = graph.getNode(node)
+    if (!node) throw new Error('not node: '+ node)
+    return _remove(node)
+  }
 
   export function add(parent,childs) {
     return _add(parent,childs)
@@ -273,6 +278,46 @@ function _add(parent, childs) {
   }
 }
 
+function _delNode(node){
+  if (node.puiIds){
+    for (const id of node.puiIds) {
+      pnodes.remove(id)
+    }
+  } else if (node.uiId) {
+    nodes.remove(node.uiId)
+  }
+  texts.remove(node.id)
+}
+function _remove(node) {
+  if (node.links.length) {
+      const todellinks = []
+      const todelnodes = [node]
+      // delete from scene
+      graph.forEachLinkedNode( node.id, linkedNode => {
+        let link = graph.getLink(node.id,linkedNode.id)
+        if (!link) link = graph.getLink(linkedNode.id,node.id)
+        todellinks.push(link)
+        lines.remove(link.uiId)
+        if (linkedNode.links.length < 2) {
+          _delNode(linkedNode)
+          todelnodes.push(linkedNode)
+        }
+      })
+      _delNode(node)
+      // delete from graph
+      for (const link of todellinks) {
+        graph.removeLink(link)
+      }
+      for (const n of todelnodes) {
+        graph.removeNode(n)
+      }
+  } else {
+    _delNode(node)
+    graph.removeNode(node)
+  }
+  scene.renderFrame()
+}
+
 function _relayout() {
   renderFrame()
 }
@@ -281,9 +326,6 @@ function updatePositions() {
   pointPositions = createtree()
   idxPositions = []
   const tmp = []
-  // TODO move instead of remove
-  //scene.removeChild(texts)
-  //texts = new TextCollection(scene.getGL())
   graph.forEachNode((node) => {
     const pos = layout.getNodePosition(node.id)
     const uiPosition = node.ui.position
@@ -415,6 +457,7 @@ function xyisnode(x,y,z,intersectRadius = intersectSphereRadius){
     const hit = (maybehit[i] + 3) / 3
     const hittedNode = idxPositions[hit - 1]
     const node = graph.getNode(hittedNode)
+    if (!node) return
     const r = node.ui.size / 2
     const xx = node.ui.position[0]
     const yy = node.ui.position[1]
@@ -498,9 +541,10 @@ function drawNode(node, ncolor) {
 function parseAction(action) {
   let name
   let fn
+  console.dir(action)
   if (typeof action === 'string') {
     name = action
-    fn=(node)=>{dispatch(name,node)}
+    fn=(node)=>{dispatch('menuAction',{name,node})}
   } else if (typeof action === 'function') {
     name = action.name
     fn = action
@@ -543,23 +587,16 @@ function parseAction(action) {
       for (const key of Object.keys(defaultIcons)) {
         if (!icons[key]) icons[key] = defaultIcons[key]
       }
-      /*
-      const defaultMenus = {
-            defaultNode:['remove','bug'],
-            defaultGraph:['relayout','birdview','bug']
-            }
-      for (const key of Object.keys(defaultMenus)) {
-          if (!menus[key]) menus[key] = defaultMenus[key]
-      }
-      */
 
-
-
+      console.dir(actionsMap)
+      console.dir(actions)
       for (const action of actions) {
         const { name, fn } = parseAction(action)
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
         else throw new Error('duplicate action: ' + name)
       }
+      console.dir(actionsMap)
+      console.dir(menus)
       for (const menu of menus) {
         const name = Object.keys(menu)[0]
         const ma = []
@@ -574,12 +611,18 @@ function parseAction(action) {
         }
         menusMap.set(name,ma)
       }
-      for (const {name, fn} of defaultMenuNode) {
+      console.dir(actionsMap)
+      console.dir(defaultMenuNode)
+      for (const action of defaultMenuNode) {
+        const { name, fn } = parseAction(action)
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
       }
+      console.dir(actionsMap)
+      console.dir(defaultMenuGraph)
       for (const {name, fn} of defaultMenuGraph) {
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
       }
+      console.dir(actionsMap)
 
       let waitformousetostop
 
@@ -732,6 +775,8 @@ items="{contextmenu.menu}"
 fontsize={24}
 on:click={({detail})=>{
   //clickOnNode=false; mouseOnNode=false;
+  console.dir(actionsMap)
+  console.dir(detail)
   const fn = actionsMap.get(detail)
   if (!fn) throw new Error('missing action function: '+ detail)
   else fn(contextmenu.node,graph)
@@ -742,23 +787,34 @@ on:cancel={(e)=>{contextmenu = undefined}}
     <canvas bind:this={canvas}
       on:contextmenu="{
         (e)=>{
-          // TODO move it to scene if w-gl ready
+          // TODO move it to scene if w-gl has contextmenu
           e.preventDefault();
           if (contextmenu) {
             contextmenu = undefined
             return
           }
-          const {x,y,z} = scene.getSceneCoordinate(e.clientX, e.clientY)
-          X = e.offsetX
+          const [x,y,z] = scene.getSceneCoordinate(e.clientX, e.clientY)
+          X =  e.offsetX
           Y = e.offsetY
+
           const node = xyisnode(x,y,z)
+          console.dir({x,y,z,X,Y, node})
           const menu = []
           if (node) {
             if (node.data.actions) {
               for (const action of node.data.actions) {
                 const  {name, fn} = parseAction(action)
-                if (!actionsMap.get(action)) actionsMap.set(name,fn)
-                // else TODO override existing !?
+                if (!actionsMap.get(action)) {
+                  actionsMap.set(name,fn)
+                // TODO override existing !?
+                } else {
+                  if (typeof action !== 'string') {
+                    const ofn = actionsMap.get(name)
+                    if (ofn.toString().replace(/\s/g, '') != fn.toString().replace(/\s/g, '')) {
+                      console.log(fn.toString())
+                    }
+                  }
+                }
                 menu.push(name)
               }
             }

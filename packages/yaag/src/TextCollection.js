@@ -157,6 +157,14 @@ export default class ColoredTextCollection extends GLCollection {
     }
 
   }
+  remove(id) {
+    if (this.texts[id]) {
+      for (const charId of this.texts[id]){
+        this.program.remove(charId)
+      }
+    }
+
+  }
 }
 
 function getTextProgram(gl, options) {
