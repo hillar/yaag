@@ -544,7 +544,7 @@ function parseAction(action) {
   console.dir(action)
   if (typeof action === 'string') {
     name = action
-    fn=(node)=>{dispatch('menuAction',{name,node})}
+    fn=(node)=>{dispatch('menuAction',{action,node})}
   } else if (typeof action === 'function') {
     name = action.name
     fn = action

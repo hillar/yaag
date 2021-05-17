@@ -1,44 +1,32 @@
 <script>
 	//import Graph from '@hillar/yaag'
   import Graph from '../../../../packages/yaag/src/index.mjs'
-  import {menuicons} from '../../../../packages/yaag/src/menuicons.mjs'
-	import {onMount} from 'svelte'
 
-	let graph
+  	import { onMount } from 'svelte'
 
-  const names = Object.keys(menuicons)
+  	let graph
+  	let menus = [
+  		{basic:['open', 'search']},
+  		{root:['open','search','foo', 'bar']}
+  	]
 
-  const menuactions = {
-    bug : (name, node) => {
-      alert(JSON.stringify(node))
-    },
-    expand : (name, node) => {
-      graph.add(node.id,'expanded'+Math.random())
-    }
-  }
+  	onMount( async () => {
+  		const parent = {id:'parent',data:{menu:'root'}}
+  		for (let i = 1 ; i < 10; i++) {
+  			  const child = {id:i,data:{menu:'basic', size:i}}
+  				graph.add(parent,child)
+  		}
+  	})
 
-  const handleMenuAction = (name, node) => {
-    if (menuactions[name]) menuactions[name](name, node)
-    else throw new Error('missing action: '+ name)
-  }
+  	let menuaction = 'right-click on node(s)'
 
-	onMount(()=>{
+  </script>
 
-		graph.add(1,2)
-		graph.add(2,[4,5,6,7,8,9])
-		//graph.add(9,{id:33,data:{actions:Object.keys(menuactions)}})
-    graph.add(33,[14,15,6,7,8,9])
-	})
-</script>
-<div style="height:50vh;">
-
-<Graph
-			 bind:this="{graph}"
-       on:menuAction="{({detail})=> {
-         const {name, node} = detail
-         handleMenuAction(name,node)
-         }}"
-			 />
-
-
-</div>
+  <div class="" style="height:50vh; width:90vw; ">
+    <Graph
+  				 bind:this="{graph}"
+  				 menus="{menus}"
+  				 on:menuAction="{ ({detail}) => { menuaction = JSON.stringify(detail,null,4) }}"
+  				 />
+  </div>
+  <small><pre> {menuaction} </pre></small>
