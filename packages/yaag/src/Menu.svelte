@@ -71,13 +71,15 @@
 		pointer-events: bounding-box;
 	}
 
+
 </style>
 
 <svg on:click="{(e)=>{dispatch('cancel',null);}}">
 	<circle cx="{x}" cy="{y}" r="{radius+f}"  />
 	{#each menu as item,i}
   {#if (icon(item))}
-		<svg x="{x+menuPositionX(i,l)-f/2}"
+		<svg style="cursor: pointer;"
+				 x="{x+menuPositionX(i,l)-f/2}"
 				 y="{y+menuPositionY(i,l)-f/2}"
 				 width="{fontsize}"
 				 height="{fontsize}"
@@ -92,7 +94,7 @@
      <text
          x="{x+menuPositionX(i,l)-f/2}"
  				 y="{y+menuPositionY(i,l)-f/2+fontsize}"
-         style="font: {fontsize/3}px sans-serif;"
+         style="font: {fontsize/3}px sans-serif;cursor: pointer;"
          on:click="{()=>{dispatch('click',item)}}"
      >
        {item}
