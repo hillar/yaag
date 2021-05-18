@@ -16,18 +16,18 @@
 
   import { onMount, createEventDispatcher } from 'svelte'
 
-  export let fontJSON
-  export let fontPNG
+  export let fontJSON  = undefined
+  export let fontPNG = undefined
 
   export let sceneColor = 'white'
   export let nodeColor = 'mediumseagreen'
-  export let clickedColor
-  export let lineColor
-  export let textColor
-  export let highlightColor
-  export let rootColor
-  export let parentColor
-  export let childColor
+  export let clickedColor = undefined
+  export let lineColor  = undefined
+  export let textColor  = undefined
+  export let highlightColor  = undefined
+  export let rootColor = undefined
+  export let parentColor = undefined
+  export let childColor = undefined
 
   export let spehereRadius = 5
   export let findPath = findPathAStar
@@ -114,7 +114,7 @@ let physicsSettings = {
     }
 }
 let scene
-export let graph
+let graph
 let layout
 let nodes
 let pnodes
@@ -150,7 +150,7 @@ let frameToken = 0
   }
 
 function _add(parent, childs) {
-
+  graph.beginUpdate()
   //return new Promise ( (resolve) => {
   if (!parent.id) parent = { id: parent , data: {}}
   let needBirdView = false
@@ -253,6 +253,7 @@ function _add(parent, childs) {
         link.ui = line
         link.uiId = lines.add(link.ui)
       }
+      graph.endUpdate()
     relayout()
   }
   if (needBirdView) {
@@ -261,42 +262,41 @@ function _add(parent, childs) {
 }
 
 function _delNode(node){
-  if (node.puiIds){
-    for (const id of node.puiIds) {
+  const {id, uiId, puiIds } = node
+  if (puiIds){
+    for (const id of puiIds) {
       pnodes.remove(id)
     }
-  } else if (node.uiId) {
-    nodes.remove(node.uiId)
+  } else if (uiId) {
+    nodes.remove(uiId)
   }
-  texts.remove(node.id)
+  texts.remove(id)
 }
 function _remove(node) {
-  if (mouseOnNode && mouseOnNode.node.id === node.id) mouseOnNode = undefined
-  if (clickOnNode && clickOnNode.endpoint.id === node.id) clickOnNode.endpoint = undefined
-  if (clickOnNode && clickOnNode.node.id === node.id) clickOnNode = undefined
+      graph.beginUpdate()
+      const { id } = node
       const todellinks = []
-      const todelnodes = [node]
+      const todelnodes = [node.id]
       // delete from scene
-      graph.forEachLinkedNode( node.id, linkedNode => {
-        let link = graph.getLink(node.id,linkedNode.id)
-        if (!link) link = graph.getLink(linkedNode.id,node.id)
-        todellinks.push(link)
+      graph.forEachLinkedNode( id, (linkedNode, link) => {
         lines.remove(link.uiId)
-        let count = 0
-        graph.forEachLinkedNode(linkedNode.id, ()=>count++)
-        if (count < 2) {
+        if (linkedNode.links.size < 2) {
           _delNode(linkedNode)
-          todelnodes.push(linkedNode)
-        }
+          todelnodes.push(linkedNode.id)
+        } else todellinks.push(link)
       })
       _delNode(node)
       // delete from graph
       for (const link of todellinks) {
         graph.removeLink(link)
       }
-      for (const n of todelnodes) {
-        graph.removeNode(n.id)
+      for (const id of todelnodes) {
+        graph.removeNode(id)
       }
+      if (mouseOnNode && mouseOnNode.node.id === node.id) mouseOnNode = undefined
+      if (clickOnNode && clickOnNode.endpoint.id === node.id) clickOnNode.endpoint = undefined
+      if (clickOnNode && clickOnNode.node.id === node.id) clickOnNode = undefined
+      graph.endUpdate()
 
   updatePositions()
   scene.renderFrame()
