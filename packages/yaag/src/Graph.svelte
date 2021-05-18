@@ -274,7 +274,6 @@ function _remove(node) {
   if (mouseOnNode && mouseOnNode.node.id === node.id) mouseOnNode = undefined
   if (clickOnNode && clickOnNode.endpoint.id === node.id) clickOnNode.endpoint = undefined
   if (clickOnNode && clickOnNode.node.id === node.id) clickOnNode = undefined
-  if (node.links.length) {
       const todellinks = []
       const todelnodes = [node]
       // delete from scene
@@ -283,7 +282,9 @@ function _remove(node) {
         if (!link) link = graph.getLink(linkedNode.id,node.id)
         todellinks.push(link)
         lines.remove(link.uiId)
-        if (linkedNode.links.length < 2) {
+        let count = 0
+        graph.forEachLinkedNode(linkedNode.id, ()=>count++)
+        if (count < 2) {
           _delNode(linkedNode)
           todelnodes.push(linkedNode)
         }
@@ -296,10 +297,7 @@ function _remove(node) {
       for (const n of todelnodes) {
         graph.removeNode(n.id)
       }
-  } else {
-    _delNode(node)
-    graph.removeNode(node)
-  }
+
   updatePositions()
   scene.renderFrame()
 }
@@ -477,10 +475,12 @@ function drawNode(node, ncolor, lcolor) {
         pnodes.update(id,{ from, to, color: node.ui.color })
     }
   } else nodes.update(node.uiId,node.ui)
-  for (const link of node.links){
+  /*
+  if (node.links) for (const link of node.links){
     link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : colors.lineColor)
     lines.update(link.uiId,link.ui)
   }
+  */
 }
 
 function drawSubGraphLinks(subg,ncolor,lcolor){
@@ -489,16 +489,15 @@ function drawSubGraphLinks(subg,ncolor,lcolor){
     //if (mouseOnNode && mouseOnNode.node.id == n.id) return
     drawNode(n.id,ncolor,lcolor)
   })
-  /*
-  ncolor = ncolor ? ncolor : ( lcolor ? lcolor : undefined)
+  lcolor = lcolor ? lcolor : ncolor
   subg.forEachLink((l) => {
     let link
     link = graph.getLink(l.fromId,l.toId)
     if (!link) link = graph.getLink(l.toId,l.fromId)
-    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : linkColor)
+    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : colors.lineColor)
     lines.update(link.uiId,link.ui)
   })
-
+  /*
   subg.forEachNode((n) => {
     const node = graph.getNode(n.id)
     node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
