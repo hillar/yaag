@@ -38,7 +38,7 @@
     <Graph
   				 bind:this="{graph}"
   				 menus="{menus}"
-           sceneColor="blue"
+           sceneColor="white"
   				 on:menuAction="{ ({detail}) => { menuaction = JSON.stringify(detail,null,4) }}"
   				 />
   </div>

@@ -271,6 +271,9 @@ function _delNode(node){
   texts.remove(node.id)
 }
 function _remove(node) {
+  if (mouseOnNode && mouseOnNode.node.id === node.id) mouseOnNode = undefined
+  if (clickOnNode && clickOnNode.endpoint.id === node.id) clickOnNode.endpoint = undefined
+  if (clickOnNode && clickOnNode.node.id === node.id) clickOnNode = undefined
   if (node.links.length) {
       const todellinks = []
       const todelnodes = [node]
@@ -291,12 +294,13 @@ function _remove(node) {
         graph.removeLink(link)
       }
       for (const n of todelnodes) {
-        graph.removeNode(n)
+        graph.removeNode(n.id)
       }
   } else {
     _delNode(node)
     graph.removeNode(node)
   }
+  updatePositions()
   scene.renderFrame()
 }
 
@@ -340,7 +344,7 @@ function updatePositions() {
 		});
 
   })
-  scene.appendChild(texts)
+  //scene.appendChild(texts)
   pointPositions.init(tmp)
 
   graph.forEachLink((link) => {
