@@ -9,7 +9,7 @@
   import PointCollection from './PointCollection.js'
   import LineCollection from './LineCollection.js'
   import TextCollection from './TextCollection.js'
-  import { toWGL, toRGBA } from './colors.mjs'
+  import { toWGL, toRGBA, getComplimentaryColor } from './colors.mjs'
   import Loading from './Loading.svelte'
   import {icons as defaultIcons} from './icons.mjs'
   import Menu from './Menu.svelte'
@@ -19,21 +19,22 @@
   export let fontJSON
   export let fontPNG
 
-  export let sceneColor = toRGBA('white')
-  export let nodeColor = toWGL('yellowgreen')
-  export let lineColor = toWGL('yellowgreen')
-  export let textColor = toWGL('black')
-  export let highlightColor = toWGL('indianred')
-  export let clickedColor = toWGL('red')
-  export let rootColor = toWGL('yellowgreen')
-  export let parentColor = toWGL('yellowgreen')
-  export let childColor = toWGL('yellowgreen')
+  export let sceneColor = 'white'
+  export let nodeColor = 'mediumseagreen'
+  export let clickedColor
+  export let lineColor
+  export let textColor
+  export let highlightColor
+  export let rootColor
+  export let parentColor
+  export let childColor
 
   export let spehereRadius = 5
   export let findPath = findPathAStar
   export let icons = {}
   export let menus = []
   export let actions = []
+  const colors = {}
   const actionsMap = new Map()
   const menusMap = new Map()
 
@@ -54,8 +55,6 @@
     console.log('dispatch',n,d)
     _dispatch(n,d)
   }
-
-  let linkColor = lineColor
 
   export function clear(){
     graph.clear()
@@ -135,7 +134,7 @@ let frameToken = 0
     scene = createScene(canvas);
     // TODO better way to wait for textcolletion is ready
     texts = new TextCollection(scene.getGL(),fontJSON,fontPNG,()=>{updatePositions(); scene.renderFrame()})
-    const {r,g,b,a} = sceneColor
+    const {r,g,b,a} = toRGBA(sceneColor)
     scene.setClearColor(r,g,b,a);
     graph = new ngraph()
     layout = forcelayout(graph, physicsSettings)
@@ -156,39 +155,30 @@ function _add(parent, childs) {
   if (!parent.id) parent = { id: parent , data: {}}
   let needBirdView = false
   if (!graph.hasNode(parent.id)) {
-    graph.addNode(parent.id, parent.data)
-    // pin root node to 0,0 and make it big
-    if (graph.getNodesCount() === 1) {
-      let nodeRoot = graph.getNode(parent.id)
-			nodeRoot.data.size = nodeRoot.data.size ?  nodeRoot.data.size : spehereRadius * 4
-			nodeRoot.data.color = nodeRoot.data.color ?  nodeRoot.data.color : rootColor
-      layout.pinNode(nodeRoot, true)
-      layout.setNodePosition(parent.id, 0, 0, 0)
+    if (!parent.data) parent.data = {}
+    const isRoot = graph.getNodesCount() === 0
+    parent.data.size = parent.data.size ? parent.data.size : (isRoot ? spehereRadius * 4 : spehereRadius * 2)
+    parent.data.color = parent.data.color ? toWGL(parent.data.color) : (isRoot ? colors.rootColor : colors.parentColor)
+    let node = graph.addNode(parent.id, parent.data)
+    if (isRoot) {
+      layout.pinNode(node, true)
+      layout.setNodePosition(node.id, 0, 0, 0)
       needBirdView = true
     }
-    let node = graph.getNode(parent.id)
     const point = layout.getNodePosition(parent.id)
-    let size = spehereRadius * 2
-    if (node.data && node.data.size) {
-      size = node.data.size
-    } else {
-      if (!node.data) node.data = {}
-      node.data.size = size
-    }
     node.ui = {
-      size,
+      size: node.data.size,
       position: [point.x, point.y, point.z || 0],
-      color: node.data.color || parentColor,
+      color: node.data.color,
     }
 
     // text id must be same as node id, as addtext can not return ;/
-
     texts.addText({
       id: node.id,
 			x: point.x,
 			y: point.y,
 			text: node.data.label ? ''+node.data.label : ''+node.id,
-			color: textColor
+			color: colors.textColor
 		});
 
     if (node.data.type && icons[node.data.type]){
@@ -199,7 +189,7 @@ function _add(parent, childs) {
           const puid = pnodes.add({
             from: [icon[c][i-1][0]+point.x, icon[c][i-1][1]+point.y, 0],
             to: [icon[c][i][0]+point.x, icon[c][i][1]+point.y,  0],
-            //color: rootColor,
+            color: node.ui.color,
           });
           node.puiIds.push({id:puid,i,c})
         }
@@ -213,28 +203,18 @@ function _add(parent, childs) {
   for (let child of childs) {
       if (!child.id) child = {id: child, data: {}}
       if (!graph.hasNode(child.id)) {
+        if (!child.data) child.data = {}
+        child.data.size = child.data.size ? child.data.size : spehereRadius * 2
+        child.data.color = child.data.color ? toWGL(child.data.color) : colors.childColor
         graph.addNode(child.id, child.data)
         let node = graph.getNode(child.id)
         const point = layout.getNodePosition(child.id)
-        let size = spehereRadius
-        if (node.data && node.data.size) {
-          size = node.data.size
-        } else {
-          if (!node.data) node.data = {}
-          node.data.size = size
-        }
-
         node.ui = {
-          size,
+          size: node.data.size,
           position: [point.x, point.y, point.z || 0],
-          color: node.data.color || childColor,
+          color: node.data.color,
         }
-
-
-
-
         if (node.data.type && icons[node.data.type]){
-
           node.puiIds = []
           const icon = icons[node.data.type] ? icons[node.data.type] : icons[node.data.menu]
           for (const c in icon){
@@ -255,8 +235,8 @@ function _add(parent, childs) {
           id: node.id,
     			x: point.x,
     			y: point.y,
-    			text: node.data.label ? ''+node.datal.label : ''+node.id,
-    			color: textColor
+    			text: node.data.label ? ''+node.data.label : ''+node.id,
+    			color: colors.textColor
     		});
 
       }
@@ -268,7 +248,7 @@ function _add(parent, childs) {
         const line = {
           from: [from.x, from.y, from.z || 0],
           to: [to.x, to.y, to.z || 0],
-          color: linkColor,
+          color: colors.lineColor,
         }
         link.ui = line
         link.uiId = lines.add(link.ui)
@@ -356,7 +336,7 @@ function updatePositions() {
       id: node.id,
 			x: pos.x - movetext, // -  node.data.size/2 ,
 			y: pos.y + movetext, //  + node.data.size/2 ,
-			color: textColor
+			color: colors.textColor
 		});
 
   })
@@ -486,7 +466,7 @@ function drawNode(node, ncolor, lcolor) {
   lcolor = lcolor ? lcolor : ncolor
   node = node.id ? node : graph.getNode(node)
 
-  node.ui.color = ncolor ? ncolor : (node.data.color && node.data.color ? node.data.color : nodeColor)
+  node.ui.color = ncolor ? ncolor : node.data.color //(node.data.color && node.data.color ? toWGL(node.data.color) : colors.nodeColor)
   if (node.puiIds) {
     for (const {id,i,c} of node.puiIds){
         const { from, to } = pnodes.get(id)
@@ -494,7 +474,7 @@ function drawNode(node, ncolor, lcolor) {
     }
   } else nodes.update(node.uiId,node.ui)
   for (const link of node.links){
-    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : linkColor)
+    link.ui.color = lcolor ? lcolor : (link.data && link.data.color ? link.data.color : colors.lineColor)
     lines.update(link.uiId,link.ui)
   }
 }
@@ -552,41 +532,36 @@ function parseAction(action) {
     /*
     let cs = getComputedStyle(viewport)
     let color = cs.getPropertyValue('color')
+    export let sceneColor = 'black'
+    export let nodeColor = 'green'
+    export let lineColor = 'yellowgreen'
+    export let textColor = toWGL('black')
+    export let highlightColor = toWGL('indianred')
+    export let clickedColor = toWGL('red')
+    export let rootColor = toWGL('yellowgreen')
+    export let parentColor = toWGL('yellowgreen')
+    export let childColor = toWGL('yellowgreen')
     */
-    initScene()
-    /*
-    background-color
-    color
-    fill
-    */
-    /*
-    let c = cs.getPropertyValue('color')
-    for (const p of cs) {
-      const sv = cs.getPropertyValue(p)
-      if (sv.startsWith('rgb')) {
-        const c = style2rgba(cs.getPropertyValue(p))
-        console.log(p,sv)
-        const [r,g,b,a] = c
-        const n = toColor(r,g,b,a)
-        const cc = toRgba(n)
+    colors.sceneColor = toWGL(sceneColor)
+    colors.nodeColor = toWGL(nodeColor)
+    colors.clickedColor = clickedColor ? toWGL(clickedColor) : toWGL('red')
+    colors.rootColor = rootColor ? toWGL(rootColor) : colors.nodeColor
+    colors.parentColor =  parentColor ? toWGL(parentColor) : getComplimentaryColor(colors.rootColor)
+    colors.childColor = childColor ? toWGL(childColor) : getComplimentaryColor(colors.parentColor)
+    colors.lineColor = lineColor ? toWGL(lineColor) : getComplimentaryColor(colors.childColor)
+    colors.textColor = textColor ? toWGL(textColor) : getComplimentaryColor(colors.lineColor,1.5)
+    colors.highlightColor = highlightColor ? toWGL(highlightColor) : getComplimentaryColor(colors.clickedColor)
 
-        console.log(n,c,cc)
-      }
-    }
-    */
+    initScene()
+
       for (const key of Object.keys(defaultIcons)) {
         if (!icons[key]) icons[key] = defaultIcons[key]
       }
-
-      console.dir(actionsMap)
-      console.dir(actions)
       for (const action of actions) {
         const { name, fn } = parseAction(action)
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
         else throw new Error('duplicate action: ' + name)
       }
-      console.dir(actionsMap)
-      console.dir(menus)
       for (const menu of menus) {
         const name = Object.keys(menu)[0]
         const ma = []
@@ -601,19 +576,13 @@ function parseAction(action) {
         }
         menusMap.set(name,ma)
       }
-      console.dir(actionsMap)
-      console.dir(defaultMenuNode)
       for (const action of defaultMenuNode) {
         const { name, fn } = parseAction(action)
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
       }
-      console.dir(actionsMap)
-      console.dir(defaultMenuGraph)
       for (const {name, fn} of defaultMenuGraph) {
         if (!actionsMap.has(name)) actionsMap.set(name,fn)
       }
-      console.dir(actionsMap)
-
       let waitformousetostop
 
       scene.on('mousemove',(e)=>{
@@ -643,10 +612,10 @@ function parseAction(action) {
                 clickOnNode.connetion = connetion
               }
               if (connetion) {
-                drawSubGraphLinks(connetion, highlightColor)
+                drawSubGraphLinks(connetion, colors.highlightColor)
                 dispatch('mouseOnPath', connetion)
               } else {
-                drawNode(node,highlightColor)
+                drawNode(node,colors.highlightColor)
                 dispatch('mouseOnNode', node)
               }
               mouseOnNode =  { node }
@@ -674,7 +643,7 @@ function parseAction(action) {
           }
           if (!clickOnNode) {
             clickOnNode =  { node }
-            drawNode(node,clickedColor)
+            drawNode(node,colors.clickedColor)
             dispatch('clickOnNode', node)
           } else {
             if (clickOnNode.node.id === node.id) {
@@ -685,12 +654,12 @@ function parseAction(action) {
 
               if (clickOnNode.connetion) {
                 // keep it
-                drawNode(node,clickedColor)
+                drawNode(node,colors.clickedColor)
                 clickOnNode.endpoint = node
                 dispatch('clickOnPath', clickOnNode.connetion)
               } else {
                 drawNode(clickOnNode.node)
-                drawNode(node,clickedColor)
+                drawNode(node,colors.clickedColor)
                 clickOnNode =  { node }
                 //drawNode(node,clickedColor)
                 dispatch('clickOnNode', node)
@@ -764,9 +733,6 @@ function parseAction(action) {
 items="{contextmenu.menu}"
 fontsize={24}
 on:click={({detail})=>{
-  //clickOnNode=false; mouseOnNode=false;
-  console.dir(actionsMap)
-  console.dir(detail)
   const fn = actionsMap.get(detail)
   if (!fn) throw new Error('missing action function: '+ detail)
   else fn(contextmenu.node,graph)
@@ -786,9 +752,7 @@ on:cancel={(e)=>{contextmenu = undefined}}
           const [x,y,z] = scene.getSceneCoordinate(e.clientX, e.clientY)
           X =  e.offsetX
           Y = e.offsetY
-
           const node = xyisnode(x,y,z)
-          console.dir({x,y,z,X,Y, node})
           const menu = []
           if (node) {
             if (node.data.actions) {
