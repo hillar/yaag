@@ -46,7 +46,7 @@
 
   const aStar = paths.aStar
 
-  const ITERATIONS_COUNT = 10000
+  const ITERATIONS_COUNT = 6000
   const intersectSphereRadius = spehereRadius * 4 // TODO set depending on graph nodes size
 
   const _dispatch = createEventDispatcher()
@@ -102,11 +102,11 @@
 let physicsSettings = {
   dimensions: 2,
   timeStep: 0.5,
-  springLength: 20,
-  springCoefficent: 0.8,
-  gravity: -100,
-  dragCoefficent: 0.9,
-  theta: 0.8,
+  springLength: 30,
+  springCoefficent: 0.9,
+  gravity: -400,
+  dragCoefficent: 0.8,
+  theta: 0.9,
   nodeMass : (nodeId) => {
       const links = graph.getLinks(nodeId);
       if (links && links.length) return 1 + links.length / 3.0;
@@ -250,6 +250,7 @@ function _add(parent, childs) {
         } else {
           node.uiId = nodes.add(node.ui)
         }
+
         texts.addText({
           id: node.id,
     			x: point.x,
@@ -257,6 +258,7 @@ function _add(parent, childs) {
     			text: node.data.label ? ''+node.datal.label : ''+node.id,
     			color: textColor
     		});
+
       }
       if (!graph.hasLink(parent.id, child.id)) {
         graph.addLink(parent.id, child.id, child.linkdata)
@@ -386,56 +388,45 @@ function renderFrame() {
 
 function frame() {
   renderScene()
-  frameToken = 0
+  //frameToken = 0
 }
 
 let maxTimePerChunk
 
 function renderScene() {
-  maxTimePerChunk = maxTimePerChunk || 100;
+  maxTimePerChunk = maxTimePerChunk || 25;
   let startTime
   let iters = 0
+  let last = 0
   let stable
-  if (!startwait) {
-    startwait = window.performance.now()
-  }
+  if (!startwait) startwait = window.performance.now()
   function doIters(){
     startTime = window.performance.now();
     while (iters < ITERATIONS_COUNT) {
       iters++
       stable = layout.step()
-  		if (stable) {
+  		if (stable || iters >= ITERATIONS_COUNT) {
         clearTimeout(waittimeouter)
         waittimeouter = setTimeout(()=>{
           const took = window.performance.now() - startwait
           startwait = undefined
+          frameToken = 0
         },maxTimePerChunk*2)
+        updatePositions()
+        birdview()
+        //frameToken = 0
         break
       }
       const elapsed = window.performance.now() - startTime;
       if (elapsed > maxTimePerChunk && iters < ITERATIONS_COUNT) {
-        const rect = layout.getGraphRect()
         updatePositions()
-        scene.setViewBox({
-          left: rect.min_x,
-          top: rect.min_y,
-          right: rect.max_x,
-          bottom: rect.max_y,
-        })
-        scene.renderFrame()
+        birdview()
+        //console.log(iters - last)
+        //last = iters
         setTimeout( () => { doIters() },1)
         break
       }
     }
-    const rect = layout.getGraphRect()
-    updatePositions()
-    scene.setViewBox({
-      left: rect.min_x,
-      top: rect.min_y,
-      right: rect.max_x,
-      bottom: rect.max_y,
-    })
-    scene.renderFrame()
   }
   doIters()
 }
@@ -541,7 +532,6 @@ function drawNode(node, ncolor) {
 function parseAction(action) {
   let name
   let fn
-  console.dir(action)
   if (typeof action === 'string') {
     name = action
     fn=(node)=>{dispatch('menuAction',{action,node})}
