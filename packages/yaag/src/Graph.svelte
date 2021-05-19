@@ -263,39 +263,43 @@ function _add(parent, childs) {
 
 function _delNode(node){
   const {id, uiId, puiIds } = node
+  texts.remove(id)
   if (puiIds){
-    for (const id of puiIds) {
+    for (const {id} of puiIds) {
       pnodes.remove(id)
     }
   } else if (uiId) {
     nodes.remove(uiId)
   }
-  texts.remove(id)
+
 }
 function _remove(node) {
       graph.beginUpdate()
       const { id } = node
-      const todellinks = []
-      const todelnodes = [node.id]
+      //const todellinks = []
+      //const todelnodes = [node.id]
       // delete from scene
       graph.forEachLinkedNode( id, (linkedNode, link) => {
         lines.remove(link.uiId)
         if (linkedNode.links.size < 2) {
           _delNode(linkedNode)
-          todelnodes.push(linkedNode.id)
-        } else todellinks.push(link)
+          graph.removeNode(linkedNode.id)
+          //todelnodes.push(linkedNode.id)
+        } //else todellinks.push(link)
       })
       _delNode(node)
       // delete from graph
+      /*
       for (const link of todellinks) {
         graph.removeLink(link)
       }
-      for (const id of todelnodes) {
+      */
+      //for (const id of todelnodes) {
         graph.removeNode(id)
-      }
-      if (mouseOnNode && mouseOnNode.node.id === node.id) mouseOnNode = undefined
-      if (clickOnNode && clickOnNode.endpoint.id === node.id) clickOnNode.endpoint = undefined
-      if (clickOnNode && clickOnNode.node.id === node.id) clickOnNode = undefined
+      //}
+      if (mouseOnNode && mouseOnNode.node.id === id) mouseOnNode = undefined
+      if (clickOnNode && clickOnNode.endpoint.id === id) clickOnNode.endpoint = undefined
+      if (clickOnNode && clickOnNode.node.id === id) clickOnNode = undefined
       graph.endUpdate()
 
   updatePositions()
