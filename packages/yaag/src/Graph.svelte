@@ -87,6 +87,29 @@
     })
   }
 
+  export function highlight(nodeId){
+    if (mouseOnNode) drawNode(mouseOnNode.node)
+    const node = graph.getNode(nodeId)
+    drawNode(node,colors.highlightColor)
+    mouseOnNode =  { node }
+    scene.renderFrame()
+  }
+
+  export function zoomto(nodeId,factor=5){
+    const rect = layout.getGraphRect()
+    const zoomx = Math.round(Math.abs(rect.min_x - rect.max_x)/(2*factor))
+    const zoomy = Math.round(Math.abs(rect.min_y - rect.max_y)/(2*factor))
+    const node = graph.getNode(nodeId)
+    const pos = node.ui.position
+    scene.setViewBox({
+      left: pos[0] -zoomx,
+      top: pos[1] -zoomy,
+      right: pos[0] +zoomx,
+      bottom: pos[1] +zoomy,
+    })
+    scene.renderFrame()
+  }
+
 
 
   let viewport
