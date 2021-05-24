@@ -17,7 +17,7 @@ export interface Node<Data = any> {
     links: Link[],
     data: Data
 }
-
+/*
 export interface Graph<NodeData = any, LinkData = any> {
     addNode: (node: NodeId, data?: NodeData) => Node<NodeData>
     addLink: (from: NodeId, to: NodeId, data?: LinkData) => Link<LinkData>
@@ -32,15 +32,16 @@ export interface Graph<NodeData = any, LinkData = any> {
     getNodeCount: () => number
     getLinkCount: () => number
     getLinks: (nodeId: NodeId) => Link<LinkData>[] | null
-    /** To stop the iteration return true in the callback */
     forEachNode: (callbackPerNode: (node: Node<NodeData>) => void | undefined | null | boolean) => void
     forEachLinkedNode: (nodeId: NodeId, callbackPerNode: (node: Node<NodeData>, link: Link<LinkData>) => void, oriented: boolean) => void
     forEachLink: (callbackPerLink: (link: Link<LinkData>) => void) => void
     beginUpdate: () => void
     endUpdate: () => void
     clear: () => void
+    on: () => void
+    off: () => void
 }
-
+*/
 
 
 /**
@@ -58,35 +59,28 @@ export interface Graph<NodeData = any, LinkData = any> {
  *  graph.addLink(2, 3);  // now graph contains three nodes and one link.
  *
  */
-export default createGraph;
+//export default createGraph;
 
 
 
 /**
  * Creates a new graph
  */
-function createGraph(options = {}) {
-  if ('uniqueLinkId' in options) {
-    console.warn(
-      'ngraph.graph: Starting from version 0.14 `uniqueLinkId` is deprecated.\n' +
-      'Use `multigraph` option instead\n',
-      '\n',
-      'Note: there is also change in default behavior: From now on each graph\n'+
-      'is considered to be not a multigraph by default (each edge is unique).'
-    );
+// export function createGraph<NodeData = any, LinkData = any>(options?: { multigraph: boolean }): Graph<NodeData, LinkData> & EventedType
 
-    options.multigraph = options.uniqueLinkId;
-  }
+export function createGraph()
+{
+
 
   // Dear reader, the non-multigraphs do not guarantee that there is only
   // one link for a given pair of node. When this option is set to false
   // we can save some memory and CPU (18% faster for non-multigraph);
-  if (options.multigraph === undefined) options.multigraph = false;
+  //if (options.multigraph === undefined) options.multigraph = false;
 
-  if (typeof Map !== 'function') {
+  //if (typeof Map !== 'function') {
     // TODO: Should we polyfill it ourselves? We don't use much operations there..
-    throw new Error('ngraph.graph requires `Map` to be defined. Please polyfill it before using ngraph');
-  }
+    //throw new Error('ngraph.graph requires `Map` to be defined. Please polyfill it before using ngraph');
+  //}
 
   const nodes = new Map(); // nodeId => Node
   const links = new Map(); // linkId => Link
@@ -94,8 +88,8 @@ function createGraph(options = {}) {
   const multiEdges = {};
   let suspendEvents = 0;
 
-  const createLink = options.multigraph ? createUniqueLink : createSingleLink;
-
+  //const createLink = options.multigraph ? createUniqueLink : createSingleLink;
+  const createLink = createSingleLink;
   const // Our graph API provides means to listen to graph changes. Users can subscribe
   // to be notified about changes in the graph by using `on` method. However
   // in some cases they don't use it. To avoid unnecessary memory consumption

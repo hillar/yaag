@@ -3,7 +3,7 @@ import makeWireProgram from './makeWireProgram';
 import makeThickWireProgram from './makeThickWireProgram';
 import WireAccessor from './WireAccessor';
 import Color from '../Color';
-import { ColorPoint, Line } from 'src/global';
+import { ColorPoint, Line } from '../global';
 import { DrawContext } from 'src/createScene';
 import {mixUint32Color} from '../colorUtils';
 

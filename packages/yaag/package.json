@@ -1,5 +1,5 @@
 {
-  "version": "0.0.35",
+  "version": "0.0.36",
   "name": "@hillar/yaag",
   "author": "hillar@aarelaid.net",
   "license": "MIT",
@@ -23,7 +23,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "check": "svelte-check",
-    "build": "rollup -c",
+    "build": "rollup -c && cd src/lib && rollup -c && mv index.js ../../dist/svelte/lib.mjs",
     "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {

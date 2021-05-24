@@ -1,4 +1,4 @@
-import makePanzoom from '../../gl-panzoom/index';
+import {makePanzoom} from '../../panzoom/index';
 import {quat} from '../../gl-matrix/src/index.js';
 
 export default function createMapCamera(scene, drawContext) {

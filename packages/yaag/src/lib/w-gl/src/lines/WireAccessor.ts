@@ -1,10 +1,10 @@
 import WireCollection from "./WireCollection";
-import { ColorPoint } from "src/global";
-import Color from "src/Color";
+import { ColorPoint } from "../global";
+import Color from "../Color";
 
 /**
  * Wire accessor provides access to the buffer that stores wires.
- * 
+ *
  * Wires are "lines" with 1.0 width.
  */
 export default class WireAccessor {

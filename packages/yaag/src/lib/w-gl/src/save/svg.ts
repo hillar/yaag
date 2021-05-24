@@ -1,5 +1,5 @@
 import {mat4, vec4} from '../../../gl-matrix/src/index.js';
-import createGraph, {NodeId} from '../../../ngraph.graph/index';
+import { createGraph, NodeId} from '../../../ngraph.graph/index';
 import Element from '../Element';
 import { WglScene, DrawContext } from 'src/createScene';
 import { ColorPoint } from 'src/global';
@@ -30,7 +30,7 @@ type LineCollectionTrait = {
  * head. For this we construct a graph of all paths, and perform DFS on it. It gives
  * fewer paths overall and a nice order for drawing.
  */
-type ExportGraph = import('../../ngraph.graph/index.js').Graph<ProjectedPoint, any> & import('../../ngraph.graph/index.js').EventedType
+type ExportGraph = import('../../../ngraph.graph/index').Graph<ProjectedPoint, any> & import('../../../ngraph.graph/index').EventedType
 
 interface SVGRenderingContext extends DrawContext {
   background: string

@@ -1,5 +1,5 @@
 <script>
-   import Graph from '../../../../packages/yaag-ts/src/Graph.svelte'
+   import Graph from '../../../../packages/yaag/src/Graph.svelte'
    import {onMount} from 'svelte'
 
    let foo
@@ -18,4 +18,3 @@
 <div style="height:80vh; width:80vw;">
    <Graph style="height:80vh; width:80vw;" />
 </div>
-

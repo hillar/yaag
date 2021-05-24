@@ -1,6 +1,6 @@
 import Element from '../Element';
-import {RenderProgram} from 'src/gl/defineProgram';
-import { DrawContext } from 'src/createScene';
+import {RenderProgram} from '../gl/defineProgram';
+import { DrawContext } from '../createScene';
 
 export default class GLCollection extends Element {
   uniforms?: Object;

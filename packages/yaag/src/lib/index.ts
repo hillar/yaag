@@ -1,1 +1,1 @@
-export {createScene, createGuide} from './w-gl/index.ts';
+export {createScene, createGuide} from './w-gl/index';
