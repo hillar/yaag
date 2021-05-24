@@ -1,0 +1,79 @@
+{
+  "_from": "w-gl",
+  "_id": "w-gl@0.19.0",
+  "_inBundle": false,
+  "_integrity": "sha512-fpJGM/iU0gd8P7s+j8RN5QOFeZyOJ67HxSeF4M6hOWgUYNsj+46YS9scT4+5lzOiJigUCcYLGt0EtUHHKbvW9Q==",
+  "_location": "/w-gl",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "w-gl",
+    "name": "w-gl",
+    "escapedName": "w-gl",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/w-gl/-/w-gl-0.19.0.tgz",
+  "_shasum": "2a6d5b0d73997bb19584c0d3a2c0cbffe46cf476",
+  "_spec": "w-gl",
+  "_where": "/Users/hillar/code/k3/github.com/yaag/packages/yaag",
+  "author": {
+    "name": "Andrei Kashcha"
+  },
+  "bugs": {
+    "url": "https://github.com/anvaka/wgl/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "amator": "^1.1.0",
+    "gl-matrix": "github:anvaka/gl-matrix",
+    "ngraph.events": "1.2.1",
+    "ngraph.graph": "^19.0.3",
+    "panzoom": "^9.2.3"
+  },
+  "deprecated": false,
+  "description": "A simple WebGL renderer",
+  "devDependencies": {
+    "@rollup/plugin-alias": "^3.0.1",
+    "@rollup/plugin-buble": "^0.21.1",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^4.1.1",
+    "miserables": "^1.0.2",
+    "ngraph.forcelayout3d": "^1.0.0",
+    "rollup": "^1.31.0",
+    "rollup-plugin-terser": "^5.2.0",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
+  },
+  "homepage": "https://github.com/anvaka/wgl#readme",
+  "jsdelivr": "build/wgl.js",
+  "keywords": [
+    "webgl",
+    "renderer",
+    "2d"
+  ],
+  "license": "MIT",
+  "main": "build/wgl.js",
+  "module": "build/wgl.module.js",
+  "name": "w-gl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anvaka/wgl.git"
+  },
+  "scripts": {
+    "build": "rm -rf build && rollup -c",
+    "prepublish": "npm run build",
+    "start": "rm -rf build && rollup -c",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "unpkg": "build/wgl.js",
+  "version": "0.19.0"
+}

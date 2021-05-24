@@ -1,15 +1,6 @@
 {
-  "version": "0.0.32",
+  "version": "0.0.35",
   "name": "@hillar/yaag",
-  "module": "src/index.js",
-  "keywords": [
-    "svelte",
-    "graph",
-    "anvaka"
-  ],
-  "files": [
-    "src"
-  ],
   "author": "hillar@aarelaid.net",
   "license": "MIT",
   "repository": {
@@ -18,11 +9,35 @@
   },
   "homepage": "https://github.com/hillar/yaag/tree/main/packages/yaag#readme",
   "bugs": "https://github.com/hillar/yaag/issues",
-  "dependencies": {
-    "ngraph.forcelayout": "^3.0.2",
-    "ngraph.graph": "git+https://github.com/anvaka/ngraph.graph.git#c98822ccc4d9ffb7c1ed5d834a640a19f3a57531",
-    "ngraph.path": "^1.3.1",
-    "w-gl": "^0.19.0",
-    "yaot": "^1.1.3"
+  "svelte": "dist/svelte/Graph.svelte",
+  "module": "dist/index.mjs",
+  "keywords": [
+    "svelte",
+    "component",
+    "graph"
+  ],
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "rollup -c -w",
+    "check": "svelte-check",
+    "build": "rollup -c",
+    "prepublishOnly": "npm run check && npm run build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "",
+    "@rollup/plugin-node-resolve": "",
+    "@rollup/plugin-typescript": "",
+    "rollup": "",
+    "rollup-plugin-svelte": "",
+    "rollup-plugin-css-only": "",
+    "rollup-plugin-terser": "",
+    "svelte": "",
+    "svelte-check": "",
+    "svelte-preprocess": "",
+    "tslib": "",
+    "typescript": ""
   }
 }

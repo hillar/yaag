@@ -1,0 +1,1 @@
+{"version":3,"file":"NumberAttribute.d.ts","sourceRoot":"","sources":["NumberAttribute.ts"],"names":[],"mappings":"AAAA,OAAO,aAAa,MAAM,iBAAiB,CAAC;AAE5C,MAAM,CAAC,OAAO,OAAO,eAAgB,SAAQ,aAAa;IACxD,WAAW,CAAC,MAAM,EAAE,MAAM;;;;IAe1B,YAAY,CAAC,MAAM,EAAE,MAAM,EAAE,QAAQ,SAAO,GAAG,MAAM;IAQrD,WAAW,CAAC,MAAM,EAAE,MAAM;CAG3B"}

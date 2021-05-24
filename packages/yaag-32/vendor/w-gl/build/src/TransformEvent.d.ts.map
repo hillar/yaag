@@ -1,0 +1,1 @@
+{"version":3,"file":"TransformEvent.d.ts","sourceRoot":"","sources":["TransformEvent.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,WAAW,EAAE,QAAQ,EAAE,MAAM,eAAe,CAAA;AAErD,MAAM,CAAC,OAAO,OAAO,cAAc;IACjC,WAAW,EAAE,WAAW,CAAC;IACzB,OAAO,EAAE,OAAO,CAAC;gBAEL,KAAK,EAAE,QAAQ;CAI5B"}

@@ -1,0 +1,81 @@
+{
+  "_from": "github:anvaka/gl-matrix",
+  "_id": "gl-matrix@3.3.0",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/gl-matrix",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "gl-matrix@github:anvaka/gl-matrix",
+    "name": "gl-matrix",
+    "escapedName": "gl-matrix",
+    "rawSpec": "github:anvaka/gl-matrix",
+    "saveSpec": "github:anvaka/gl-matrix",
+    "fetchSpec": null,
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "/w-gl"
+  ],
+  "_resolved": "github:anvaka/gl-matrix#ed6b600f526a8a8937c4c08a2f0f3add9e9f719a",
+  "_spec": "gl-matrix@github:anvaka/gl-matrix",
+  "_where": "/Users/hillar/code/k3/github.com/yaag/packages/yaag/node_modules/w-gl",
+  "bugs": {
+    "url": "https://github.com/toji/gl-matrix/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Brandon Jones",
+      "email": "tojiro@gmail.com"
+    },
+    {
+      "name": "Colin MacKenzie IV",
+      "email": "sinisterchipmunk@gmail.com"
+    }
+  ],
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Javascript Matrix and Vector library for High Performance WebGL apps",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/register": "^7.9.0",
+    "cross-env": "^7.0.2",
+    "del-cli": "^3.0.0",
+    "jsdoc": "^3.6.3",
+    "mocha": "^7.1.1",
+    "node-libs-browser": "^2.2.1",
+    "rollup": "^2.3.2",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-size-snapshot": "^0.11.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "typescript": "^3.8.3"
+  },
+  "homepage": "http://glmatrix.net",
+  "license": "MIT",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "name": "gl-matrix",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toji/gl-matrix.git"
+  },
+  "scripts": {
+    "build": "del dist && npm run update-license-version && npm run build-umd && npm run build-esm && npm run build-cjs && npm run build-dts && node ./utils/build.js",
+    "build-cjs": "babel src -d dist/cjs",
+    "build-dts": "tsc --allowJs --declaration --emitDeclarationOnly --module amd --outFile ./dist/index.d.ts ./src/index.js ./src/types.d.ts && node ./utils/bundle-dts.js && tsc --noEmit ./dist/index.d.ts",
+    "build-esm": "cross-env BABEL_ENV=esm babel src -d dist/esm",
+    "build-umd": "rollup -c",
+    "doc": "jsdoc -c jsdoc.config.json",
+    "old_test": "jasmine-node spec",
+    "prepare": "npm run build",
+    "test": "mocha --require @babel/register --recursive spec",
+    "update-license-version": "node utils/update-license-version.js"
+  },
+  "sideEffects": false,
+  "version": "3.3.0"
+}

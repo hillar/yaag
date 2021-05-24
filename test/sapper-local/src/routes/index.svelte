@@ -1,6 +1,6 @@
 <script>
 	//import Graph from '@hillar/yaag'
-  import Graph from '../../../../packages/yaag/src/index.mjs'
+  import Graph from '../../../../packages/yaag-ts/dist/svelte/Graph.svelte'
   import {names} from '../../../../packages/yaag/src/colors.mjs'
 
   	import { onMount } from 'svelte'

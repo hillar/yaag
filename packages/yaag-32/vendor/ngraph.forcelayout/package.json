@@ -1,0 +1,69 @@
+{
+  "_from": "ngraph.forcelayout",
+  "_id": "ngraph.forcelayout@3.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-Fapjyn9gYxv6/Jq/leECQSOakGolKx/ZoF75BxjpjfB5JbHliK7oQKRcJ3lZMLyleIGIzK47vb+ERTmFneVrZg==",
+  "_location": "/ngraph.forcelayout",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "ngraph.forcelayout",
+    "name": "ngraph.forcelayout",
+    "escapedName": "ngraph.forcelayout",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/ngraph.forcelayout/-/ngraph.forcelayout-3.0.2.tgz",
+  "_shasum": "39beb2e099bf7e9018abfa3e20b1a2de812c68f6",
+  "_spec": "ngraph.forcelayout",
+  "_where": "/Users/hillar/code/k3/github.com/yaag/packages/yaag",
+  "author": {
+    "name": "Andrei Kashcha"
+  },
+  "bugs": {
+    "url": "https://github.com/anvaka/ngraph.forcelayout/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "ngraph.events": "^1.0.0",
+    "ngraph.merge": "^1.0.0",
+    "ngraph.random": "^1.0.0"
+  },
+  "deprecated": false,
+  "description": "Force directed graph drawing layout",
+  "devDependencies": {
+    "benchmark": "~1.0.0",
+    "eslint": "^7.12.1",
+    "ngraph.generators": "^19.0.0",
+    "ngraph.graph": "^19.1.0",
+    "tap": "^15.0.6",
+    "terser": "^5.3.0"
+  },
+  "homepage": "https://github.com/anvaka/ngraph.forcelayout#readme",
+  "jsdelivr": "dist/ngraph.forcelayout.min.js",
+  "keywords": [
+    "ngraph",
+    "ngraphjs"
+  ],
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "name": "ngraph.forcelayout",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anvaka/ngraph.forcelayout.git"
+  },
+  "scripts": {
+    "build": "browserify index.js -s ngraphCreateLayout -o dist/ngraph.forcelayout.js && terser --compress -o dist/ngraph.forcelayout.min.js -- dist/ngraph.forcelayout.js",
+    "lint": "eslint .",
+    "perf": "npm version && node perf/test.js",
+    "test": "tap --branches=80 --lines=80 --statements=80 --functions=80 test/*.js"
+  },
+  "unpkg": "dist/ngraph.forcelayout.min.js",
+  "version": "3.0.2"
+}
