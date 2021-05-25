@@ -17,11 +17,11 @@ export interface Node<Data = any> {
     links: Link[],
     data: Data
 }
-/*
+
 export interface Graph<NodeData = any, LinkData = any> {
     addNode: (node: NodeId, data?: NodeData) => Node<NodeData>
     addLink: (from: NodeId, to: NodeId, data?: LinkData) => Link<LinkData>
-    removeLink: (link: Link<LinkData>) => boolean
+    removeLink: (link: Link<LinkData>, otherId?:NodeId) => boolean
     removeNode: (nodeId: NodeId) => boolean
     getNode: (nodeId: NodeId) => Node<NodeData> | undefined
     hasNode: (nodeId: NodeId) => Node<NodeData> | undefined
@@ -38,10 +38,9 @@ export interface Graph<NodeData = any, LinkData = any> {
     beginUpdate: () => void
     endUpdate: () => void
     clear: () => void
-    on: () => void
-    off: () => void
+
 }
-*/
+
 
 
 /**
@@ -68,40 +67,18 @@ export interface Graph<NodeData = any, LinkData = any> {
  */
 // export function createGraph<NodeData = any, LinkData = any>(options?: { multigraph: boolean }): Graph<NodeData, LinkData> & EventedType
 
-export function createGraph()
+export  function createGraph() //<NodeData = any, LinkData = any>()//: Graph<NodeData, LinkData> 
+
 {
 
-
-  // Dear reader, the non-multigraphs do not guarantee that there is only
-  // one link for a given pair of node. When this option is set to false
-  // we can save some memory and CPU (18% faster for non-multigraph);
-  //if (options.multigraph === undefined) options.multigraph = false;
-
-  //if (typeof Map !== 'function') {
-    // TODO: Should we polyfill it ourselves? We don't use much operations there..
-    //throw new Error('ngraph.graph requires `Map` to be defined. Please polyfill it before using ngraph');
-  //}
-
-  const nodes = new Map(); // nodeId => Node
-  const links = new Map(); // linkId => Link
-  // Hash of multi-edges. Used to track ids of edges between same nodes
+  const nodes = new Map();
+  const links = new Map();
   const multiEdges = {};
   let suspendEvents = 0;
 
   //const createLink = options.multigraph ? createUniqueLink : createSingleLink;
   const createLink = createSingleLink;
-  const // Our graph API provides means to listen to graph changes. Users can subscribe
-  // to be notified about changes in the graph by using `on` method. However
-  // in some cases they don't use it. To avoid unnecessary memory consumption
-  // we will not record graph changes until we have at least one subscriber.
-  // Code below supports this optimization.
-  //
-  // Accumulates all changes made during graph updates.
-  // Each change element contains:
-  //  changeType - one of the strings: 'add', 'remove' or 'update';
-  //  node - if change is related to node this property is set to changed graph's node;
-  //  link - if change is related to link this property is set to changed graph's link;
-  changes = [];
+  const changes = [];
 
   let recordLinkChange = noop;
   let recordNodeChange = noop;
@@ -110,181 +87,31 @@ export function createGraph()
 
   // this is our public API:
   const graphPart = {
-    /**
-     * Adds node to the graph. If node with given id already exists in the graph
-     * its data is extended with whatever comes in 'data' argument.
-     *
-     * @param nodeId the node's identifier. A string or number is preferred.
-     * @param [data] additional data for the node being added. If node already
-     *   exists its data object is augmented with the new one.
-     *
-     * @return {node} The newly added node or node with given id if it already exists.
-     */
     addNode,
-
-    /**
-     * Adds a link to the graph. The function always create a new
-     * link between two nodes. If one of the nodes does not exists
-     * a new node is created.
-     *
-     * @param fromId link start node id;
-     * @param toId link end node id;
-     * @param [data] additional data to be set on the new link;
-     *
-     * @return {link} The newly created link
-     */
     addLink,
-
-    /**
-     * Removes link from the graph. If link does not exist does nothing.
-     *
-     * @param link - object returned by addLink() or getLinks() methods.
-     *
-     * @returns true if link was removed; false otherwise.
-     */
     removeLink,
-
-    /**
-     * Removes node with given id from the graph. If node does not exist in the graph
-     * does nothing.
-     *
-     * @param nodeId node's identifier passed to addNode() function.
-     *
-     * @returns true if node was removed; false otherwise.
-     */
     removeNode,
-
-    /**
-     * Gets node with given identifier. If node does not exist undefined value is returned.
-     *
-     * @param nodeId requested node identifier;
-     *
-     * @return {node} in with requested identifier or undefined if no such node exists.
-     */
     getNode,
-
-    /**
-     * Gets number of nodes in this graph.
-     *
-     * @return number of nodes in the graph.
-     */
     getNodeCount,
-
-    /**
-     * Gets total number of links in the graph.
-     */
     getLinkCount,
-
-    /**
-     * Gets total number of links in the graph.
-     */
     getEdgeCount: getLinkCount,
-
-    /**
-     * Synonym for `getLinkCount()`
-     */
     getLinksCount: getLinkCount,
-
-    /**
-     * Synonym for `getNodeCount()`
-     */
     getNodesCount: getNodeCount,
-
-    /**
-     * Gets all links (inbound and outbound) from the node with given id.
-     * If node with given id is not found null is returned.
-     *
-     * @param nodeId requested node identifier.
-     *
-     * @return Set of links from and to requested node if such node exists;
-     *   otherwise null is returned.
-     */
     getLinks,
-
-    /**
-     * Invokes callback on each node of the graph.
-     *
-     * @param {Function(node)} callback Function to be invoked. The function
-     *   is passed one argument: visited node.
-     */
     forEachNode,
-
-    /**
-     * Invokes callback on every linked (adjacent) node to the given one.
-     *
-     * @param nodeId Identifier of the requested node.
-     * @param {Function(node, link)} callback Function to be called on all linked nodes.
-     *   The function is passed two parameters: adjacent node and link object itself.
-     * @param oriented if true graph treated as oriented.
-     */
     forEachLinkedNode,
-
-    /**
-     * Enumerates all links in the graph
-     *
-     * @param {Function(link)} callback Function to be called on all links in the graph.
-     *   The function is passed one parameter: graph's link object.
-     *
-     * Link object contains at least the following fields:
-     *  fromId - node id where link starts;
-     *  toId - node id where link ends,
-     *  data - additional data passed to graph.addLink() method.
-     */
     forEachLink,
-
-    /**
-     * Suspend all notifications about graph changes until
-     * endUpdate is called.
-     */
     beginUpdate: enterModification,
-
-    /**
-     * Resumes all notifications about graph changes and fires
-     * graph 'changed' event in case there are any pending changes.
-     */
     endUpdate: exitModification,
-
-    /**
-     * Removes all nodes and links from the graph.
-     */
     clear,
-
-    /**
-     * Detects whether there is a link between two nodes.
-     * Operation complexity is O(n) where n - number of links of a node.
-     * NOTE: this function is synonym for getLink()
-     *
-     * @returns link if there is one. null otherwise.
-     */
     hasLink: getLink,
-
-    /**
-     * Detects whether there is a node with given id
-     *
-     * Operation complexity is O(1)
-     * NOTE: this function is synonym for getNode()
-     *
-     * @returns node if there is one; Falsy value otherwise.
-     */
     hasNode: getNode,
-
-    /**
-     * Gets an edge between two nodes.
-     * Operation complexity is O(n) where n - number of links of a node.
-     *
-     * @param {string} fromId link start identifier
-     * @param {string} toId link end identifier
-     *
-     * @returns link if there is one; undefined otherwise.
-     */
     getLink
   };
 
   // this will add `on()` and `fire()` methods.
   eventify(graphPart);
-
   monitorSubscribers();
-
   return graphPart;
 
   function monitorSubscribers() {
@@ -322,7 +149,7 @@ export function createGraph()
     });
   }
 
-  function addNode(nodeId, data) {
+  function addNode(nodeId: NodeId, data?: any): Node {
     if (nodeId === undefined) {
       throw new Error('Invalid node identifier');
     }
@@ -545,7 +372,7 @@ export function createGraph()
 
   // we will not fire anything until users of this library explicitly call `on()`
   // method.
-  function noop() {}
+  function noop(o?: Node|Link, s?:string) {}
 
   // Enter, Exit modification allows bulk graph updates without firing events.
   function enterModificationReal() {
